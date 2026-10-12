@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compatibilidad — Kronox Forge</title>
+<meta name="description" content="Armador de PC con verificación de socket, tipo de memoria y potencia de fuente, más recomendador de componentes compatibles.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style2.css">
+</head>
+<body data-page="compatibilidad">
+
+<div id="navbar"></div>
+
+<main class="main">
+  <div class="wrap">
+
+    <div class="page-head">
+      <h1>Verificador de compatibilidad</h1>
+      <p>Arma un equipo por componentes y valida socket, memoria, potencia y espacio físico antes de cotizar. O consulta qué encaja con una pieza que ya tienes.</p>
+    </div>
+
+    <div class="tabs" style="max-width:380px">
+      <button class="tab active" data-view="builder">Constructor de PC</button>
+      <button class="tab" data-view="check">Verificador individual</button>
+    </div>
+
+    <!-- ============ PARTE A — Constructor ============ -->
+    <section id="viewBuilder">
+      <div class="builder" style="margin-top:18px">
+        <div>
+          <div class="row-between" style="margin-bottom:10px">
+            <h4 class="section-title" style="margin:0">Componentes del equipo</h4>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-ghost" id="quickBuild">Cargar ejemplo AMD</button>
+              <button class="btn btn-sm btn-ghost" id="quickBuildIntel">Cargar ejemplo Intel</button>
+            </div>
+          </div>
+          <div class="slots" id="slots"></div>
+          <div class="btn-group" style="margin-top:14px">
+            <button class="btn btn-primary" id="verifyAll"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg> Verificar todo</button>
+            <button class="btn" id="clearBuild">Limpiar configuración</button>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <div class="panel-title">Reglas que se comprueban</div>
+            <ul class="tiny muted" style="margin:0;padding-left:18px;line-height:1.9">
+              <li>El socket del procesador debe coincidir con el de la placa madre (LGA1700 con Z690/B660/B760/H610 · AM5 con X670/B650 · AM4 con B550).</li>
+              <li>El tipo de memoria debe ser admitido por la placa (DDR4 o DDR5, sin mezclar).</li>
+              <li>La fuente debe cubrir CPU + GPU con un margen adicional del 20%.</li>
+              <li>Formato de la placa (ATX/mATX) y longitud máxima de la GPU contra el gabinete.</li>
+              <li>Avisos de cuello de botella, VRM ajustado, SSD PCIe 4.0 en placa 3.0 y ausencia de salida de video.</li>
+            </ul>
+          </div>
+        </div>
+
+        <aside class="card sum-panel" id="sumPanel"></aside>
+      </div>
+    </section>
+
+    <!-- ============ PARTE B — Verificador individual ============ -->
+    <section id="viewCheck" class="hidden" style="margin-top:18px">
+      <div class="card card-pad-lg" style="max-width:760px">
+        <h3 style="margin-bottom:4px">Busca tu computadora y mira qué mejoras acepta</h3>
+        <p class="tiny muted" style="margin-bottom:14px">Escribe la marca y el modelo de tu laptop. El sistema muestra sus especificaciones y qué puedes actualizar (RAM, disco, etc.), marcando en verde lo compatible y en rojo lo que podría no serlo.</p>
+        <div class="search-input-wrap">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+          <input type="search" id="vSearch" placeholder="Ej. Dell Inspiron 15 3520, Mechrevo Aurora 16 Pro…" autocomplete="off" aria-label="Buscar computadora">
+        </div>
+        <div id="vSuggest" style="position:relative"></div>
+        <div class="divider"></div>
+        <h4 class="section-title">Consultas frecuentes</h4>
+        <div class="chips" id="vQuick">
+          <button class="chip" data-vid="lt-dell-inspiron-15-3520">Dell Inspiron 15 3520</button>
+          <button class="chip" data-vid="lt-dell-xps-13-2026">Dell XPS 13</button>
+          <button class="chip" data-vid="lt-mechrevo-aurora-16-pro">Mechrevo Aurora 16 Pro</button>
+          <button class="chip" data-vid="lt-mechrevo-code-01">Mechrevo Code 01</button>
+          <button class="chip" data-vid="lt-dell-g15-5530-i7">Dell G15 5530 (i7)</button>
+        </div>
+      </div>
+      <div id="vResults" style="margin-top:20px"></div>
+    </section>
+
+  </div>
+</main>
+
+<div id="footer"></div>
+<script src="js/laptops.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

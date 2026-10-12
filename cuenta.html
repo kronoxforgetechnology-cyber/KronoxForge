@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi cuenta — Kronox Forge</title>
+<meta name="description" content="Panel de usuario: perfil editable, historial de cotizaciones guardadas, códigos de promoción usados y componentes favoritos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style2.css">
+</head>
+<body data-page="cuenta">
+
+<div id="navbar"></div>
+
+<main class="main">
+  <div class="wrap">
+
+    <div class="page-head">
+      <h1>Mi cuenta</h1>
+      <p>Perfil, cotizaciones guardadas, cupones utilizados y componentes favoritos. Todo se almacena localmente en este navegador.</p>
+    </div>
+
+    <!-- Acceso restringido -->
+    <section id="loginGate" class="hidden">
+      <div class="card card-pad-lg" style="max-width:460px;text-align:center;margin:34px auto">
+        <span class="picon" style="width:52px;height:52px;margin:0 auto 14px;color:#93C5FD">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
+        </span>
+        <h2 style="font-size:17px;margin-bottom:6px">Necesitas iniciar sesión</h2>
+        <p class="tiny muted" style="margin-bottom:16px">El panel de cuenta guarda tu historial de cotizaciones y favoritos asociados a tu perfil.</p>
+        <button class="btn btn-primary" id="gateLogin">Iniciar sesión o registrarme</button>
+        <div class="divider"></div>
+        <p class="hint">Cuenta de prueba: <b>admin@kronoxlabs.com</b> / <b>Admin1234</b></p>
+      </div>
+    </section>
+
+    <!-- Panel -->
+    <section id="accountRoot" class="hidden">
+      <div class="account-layout">
+        <nav class="side-nav">
+          <button class="side-link active" data-tab="perfil">Perfil</button>
+          <button class="side-link" data-tab="historial">Historial de cotizaciones</button>
+          <button class="side-link" data-tab="cupones">Códigos usados</button>
+          <button class="side-link" data-tab="favoritos">Favoritos</button>
+          <hr class="divider">
+          <a class="side-link" href="cotizador.html">Ir al cotizador</a>
+        </nav>
+        <div id="accPanel"></div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<div id="footer"></div>
+<script src="js/laptops.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

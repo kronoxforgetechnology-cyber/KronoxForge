@@ -1791,7 +1791,7 @@ function renderQuote() {
       <div class="err-text" id="promoErr"></div>
       <p class="hint">Disponibles: ${Object.keys(PROMOS).join(', ')}</p>`}
     <div class="divider"></div>
-    <div class="btn-group" style="flex-wrap:wrap;gap:8px">
+    <div class="btn-group quote-actions" style="flex-wrap:wrap;gap:8px">
       <button class="btn btn-primary btn-sm" id="btnPdf">${ICONS.print} PDF</button>
       <button class="btn btn-sm" id="btnMail">${ICONS.mail} Correo</button>
       ${State.session ? `<button class="btn btn-sm" id="btnSave">${ICONS.box} Guardar</button>` : `<button class="btn btn-sm" id="btnLoginQuote">${ICONS.user} Inicia sesión</button>`}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recomendador — Kronox Forge</title>
+<meta name="description" content="Encuentra la laptop o PC ideal según tu perfil de uso y presupuesto, o descubre el mejor upgrade para el componente que ya tienes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style2.css">
+</head>
+<body data-page="recomendador">
+
+<div id="navbar"></div>
+
+<main class="main">
+  <div class="wrap">
+
+    <div class="page-head">
+      <h1>Recomendador</h1>
+      <p>Dos herramientas: encuentra un equipo completo según para qué lo usarás, o descubre qué componente conviene cambiar primero en el que ya tienes.</p>
+    </div>
+
+    <div class="tabs" style="max-width:420px">
+      <button class="tab active" data-rview="perfil">Buscar por perfil de uso</button>
+      <button class="tab" data-rview="upgrade">Recomendar upgrade</button>
+    </div>
+
+    <!-- ============ Herramienta A ============ -->
+    <section id="viewPerfil" style="margin-top:18px">
+      <div class="grid-2" style="grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px">
+        <div class="card card-pad-lg" style="align-self:start">
+          <h3 style="margin-bottom:3px">Cuéntanos qué necesitas</h3>
+          <p class="tiny muted" style="margin-bottom:16px">Cruzamos tus respuestas con el catálogo y los equipos armados, y puntuamos cada opción.</p>
+          <form id="profileForm" onsubmit="return false"></form>
+        </div>
+        <div>
+          <div id="recResults">
+            <div class="empty">
+              <h3>Todavía no hay resultados</h3>
+              <p class="tiny">Responde el formulario y pulsa «Encontrar mi PC ideal». Cada opción mostrará su puntaje de ajuste y la razón técnica.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Herramienta B ============ -->
+    <section id="viewUpgrade" class="hidden" style="margin-top:18px">
+      <div class="card card-pad-lg" style="max-width:760px;margin-bottom:20px">
+        <h3 style="margin-bottom:3px">¿Qué componente tienes hoy?</h3>
+        <p class="tiny muted" style="margin-bottom:14px">Comparamos su índice de rendimiento contra todo el catálogo de la misma categoría y ordenamos las opciones por puntos ganados por dólar invertido.</p>
+        <label class="field" style="margin-bottom:0">
+          <span>Componente actual</span>
+          <select id="ownedSel"></select>
+        </label>
+        <p class="hint" style="margin-top:10px">
+          La mejora estimada es orientativa: se calcula sobre un índice relativo por clase (CPU, GPU, RAM o almacenamiento) y no sustituye una prueba real con tu carga de trabajo.
+        </p>
+      </div>
+      <div id="upResults"></div>
+    </section>
+
+  </div>
+</main>
+
+<div id="footer"></div>
+<script src="js/laptops.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cotizador — Kronox Forge</title>
+<meta name="description" content="Cotización con desglose de subtotal, descuentos por cupón, IVA 13% y total final. Exportable a PDF e imprimible.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style2.css">
+</head>
+<body data-page="cotizador">
+
+<div id="navbar"></div>
+
+<main class="main">
+  <div class="wrap no-print">
+
+    <div class="page-head row-between" style="flex-wrap:wrap">
+      <div>
+        <h1>Cotizador</h1>
+        <p>Productos agregados desde el catálogo o el armador de PC. Precios en USD, IVA del 13% calculado sobre la base ya descontada.</p>
+      </div>
+      <div class="btn-group">
+        <a class="btn btn-sm" href="catalogo.html"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg> Agregar más productos</a>
+        <a class="btn btn-sm" href="compatibilidad.html">Armador de PC</a>
+      </div>
+    </div>
+
+    <div class="quote-layout">
+      <div class="quote-list-wrap">
+        <div class="empty hidden" id="quoteEmpty">
+          <h3>Tu cotización está vacía</h3>
+          <p class="tiny">Explora el catálogo o arma un equipo completo en el verificador de compatibilidad.</p>
+          <div class="btn-group" style="justify-content:center;margin-top:12px">
+            <a class="btn btn-sm btn-primary" href="catalogo.html">Ir al catálogo</a>
+            <a class="btn btn-sm" href="recomendador.html">Buscar por perfil de uso</a>
+          </div>
+        </div>
+        <div class="q-cards hidden" id="quoteTable"><div id="quoteBody"></div></div>
+      </div>
+
+      <aside class="card" id="quotePanel"></aside>
+    </div>
+
+    <p class="hint tiny" style="margin-top:14px">
+      La cotización se conserva en este navegador mediante localStorage. El documento generado es una referencia de precios y no constituye factura.
+    </p>
+
+  </div>
+
+  <!-- Documento imprimible -->
+  <div class="print-area"><div class="print-doc" id="printDoc"></div></div>
+</main>
+
+<div id="footer"></div>
+<script src="js/laptops.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

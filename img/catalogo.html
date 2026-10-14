@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kronox Forge — Catálogo de hardware y componentes</title>
+<meta name="description" content="Catálogo verificado de laptops, componentes y periféricos con comprobador de compatibilidad, cotizador y recomendador por perfil de uso.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style2.css">
+</head>
+<body data-page="index">
+
+<div id="navbar"></div>
+
+<div class="shell">
+  <main class="main">
+    <div class="wrap">
+
+      <section class="hero hero-split catalog-hero">
+        <div class="hero-tx">
+          <span class="badge badge-accent" style="margin-bottom:12px">Catálogo verificado · precios de mercado</span>
+          <h1>Construye o mejora tu PC o laptop a un nivel perfecto</h1>
+          <p>Encuentra los mejores componentes de hardware, verifica la compatibilidad en tiempo real y obtén cotizaciones instantáneas con descuentos exclusivos. Todo lo que necesitas para armar tu máquina ideal.</p>
+          <div class="hero-metrics">
+            <div class="stat"><div class="n mono" id="stProducts">—</div><div class="l">Productos</div></div>
+            <div class="stat"><div class="n mono" id="stBrands">—</div><div class="l">Marcas</div></div>
+            <div class="stat"><div class="n mono">100%</div><div class="l">Verificados</div></div>
+            <div class="stat"><div class="n mono">24/7</div><div class="l">Soporte</div></div>
+          </div>
+        </div>
+        <div class="hero-video">
+          <video src="img/VIDEO/Dell%20XPS%2013%20Laptop_%20Our%20Thinnest%20and%20Lightest%20XPS%20Yet(1080P_HD).mp4" autoplay muted loop playsinline controls preload="metadata" aria-label="Video Kronox Forge"></video>
+        </div>
+      </section>
+
+      <section id="catalog">
+        <div class="page-head row-between" style="flex-wrap:wrap">
+          <div>
+            <h1>Catálogo</h1>
+            <p>Filtra por categoría y disponibilidad.</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-input-wrap" style="flex:1;min-width:200px;max-width:380px">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+            <input type="search" id="catalogSearch" placeholder="Buscar en tiempo real…" aria-label="Buscar productos">
+          </div>
+          <span class="result-count" id="resultCount">—</span>
+          <span class="spacer"></span>
+          <select id="sortSel" style="width:auto" aria-label="Ordenar">
+            <option value="relevancia">Ordenar: relevancia</option>
+            <option value="precio-asc">Precio: menor a mayor</option>
+            <option value="precio-desc">Precio: mayor a menor</option>
+            <option value="nombre">Nombre A–Z</option>
+            <option value="stock">Mayor stock</option>
+          </select>
+        </div>
+
+        <div class="row" id="activeChips" style="gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+
+        <div class="grid" id="catalogGrid"></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div id="footer"></div>
+<script src="js/laptops.js"></script>
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('stProducts').textContent = PRODUCTS.length;
+  document.getElementById('stBrands').textContent = BRANDS.length;
+</script>
+</body>
+</html>

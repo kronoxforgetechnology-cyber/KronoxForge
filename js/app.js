@@ -803,22 +803,19 @@ function openProduct(id) {
       <button class="x-btn" data-close aria-label="Cerrar">${ICONS.x}</button>
     </div>
     <div class="modal-body">
-      <img class="detail-img" src="${catImg(p)}" alt="${esc(p.name)}">
-      <div class="detail-top">
-        <div class="detail-icon">${ICONS[p.icon] || ICONS.box}</div>
-        <div style="flex:1;min-width:0">
-          <div class="brand tiny muted" style="text-transform:uppercase;letter-spacing:.06em">${esc(p.brand)} · ${esc(catName(p.category))}</div>
-          <h2 style="font-size:17px;margin:3px 0 7px">${esc(p.name)}</h2>
-          <div class="row" style="gap:8px;flex-wrap:wrap">
-            <span class="price">${money(p.price)}</span>
-            ${p.stock > 0
-              ? `<span class="badge badge-ok"><span class="dot dot-ok"></span>${p.stock} en stock</span>`
-              : `<span class="badge badge-err"><span class="dot dot-err"></span>Agotado</span>`}
-            <button class="fav-btn ${isFav(p.id) ? 'on' : ''}" data-fav="${p.id}" title="Favorito">${ICONS.heart}</button>
-          </div>
+      <div class="detail-hero">
+        <div class="detail-media"><img class="detail-img" src="${catImg(p)}" alt="${esc(p.name)}"></div>
+        <div class="brand tiny muted" style="text-transform:uppercase;letter-spacing:.06em">${esc(p.brand)} · ${esc(catName(p.category))}</div>
+        <h2 class="detail-name">${esc(p.name)}</h2>
+        <div class="detail-meta">
+          <span class="price">${money(p.price)}</span>
+          ${p.stock > 0
+            ? `<span class="badge badge-ok"><span class="dot dot-ok"></span>${p.stock} en stock</span>`
+            : `<span class="badge badge-err"><span class="dot dot-err"></span>Agotado</span>`}
+          <button class="fav-btn ${isFav(p.id) ? 'on' : ''}" data-fav="${p.id}" title="Favorito">${ICONS.heart}</button>
         </div>
+        ${(p.tags || []).length ? `<div class="pspecs detail-tags">${(p.tags || []).map(t => `<span class="pspec">${esc(t)}</span>`).join('')}</div>` : ''}
       </div>
-      <div class="pspecs" style="margin:14px 0">${(p.tags || []).map(t => `<span class="pspec">${esc(t)}</span>`).join('')}</div>
       <h4 class="section-title">Especificaciones técnicas</h4>
       <table class="spec-table"><tbody>${specs}</tbody></table>
       <div class="compat-search hidden" id="dCompatSearch">
@@ -2018,9 +2015,21 @@ function renderProfileForm() {
 
 function renderRecommendations() {
   const host = $('#recResults'); if (!host) return;
-  const scored = candidatePool().map(c => ({ c, sc: scoreCandidate(c) }))
+  let pool = candidatePool();
+  // Filtro estricto por marca: si el usuario elige una o varias marcas,
+  // solo se muestran equipos de esas marcas (no se mezclan otras).
+  if (PROFILE.brands.length) pool = pool.filter(c => PROFILE.brands.includes(c.p.brand));
+  const scored = pool.map(c => ({ c, sc: scoreCandidate(c) }))
     .sort((a, b) => b.sc.total - a.sc.total).slice(0, 6);
   const u = USES.find(x => x.id === PROFILE.use);
+  if (!scored.length) {
+    host.innerHTML = `
+      <div class="rec-empty">
+        <h2 style="font-size:15px;margin:0 0 6px">Sin resultados para ${esc(PROFILE.brands.join(', '))}</h2>
+        <p class="tiny muted" style="margin:0">Aún no tenemos equipos de esa marca en el catálogo. Prueba con otra marca o quita el filtro de marca.</p>
+      </div>`;
+    return;
+  }
   host.innerHTML = `
     <div class="row-between" style="margin-bottom:12px">
       <h2 style="font-size:15px">Mejores opciones para <span style="color:var(--accent)">${esc(u.name)}</span></h2>

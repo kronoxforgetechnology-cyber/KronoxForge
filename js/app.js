@@ -65,7 +65,10 @@ const ICONS = {
   info: ico('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'),
   arrow: ico('<path d="M5 12h14M13 6l6 6-6 6"/>'),
   layers: ico('<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>'),
-  tag: ico('<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>')
+  tag: ico('<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'),
+  eye: ico('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>'),
+  googleG: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"/><path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.5 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.8V6.5H1.4a12 12 0 0 0 0 11z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.5l4 3.1C6.3 6.8 8.9 4.8 12 4.8z"/></svg>',
+  apple: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.6.7 2.8.7c1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4s-2.2-.9-2.4-3.3zM14.2 5.9c.6-.7 1-1.8.9-2.9-.9 0-2 .6-2.6 1.4-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>'
 };
 const icon = (n, cls = '') => `<span class="${cls}">${ICONS[n] || ICONS.box}</span>`;
 
@@ -716,34 +719,69 @@ function renderFooter() {
 /* ---- Modal de login / registro ---- */
 function authModal(mode = 'login') {
   const m = openModal(`
-    <div class="modal-head"><h3 id="authTitle">Iniciar sesión</h3><button class="x-btn" data-close aria-label="Cerrar">${ICONS.x}</button></div>
-    <div class="modal-body">
-      <div class="tabs">
-        <button class="tab ${mode === 'login' ? 'active' : ''}" data-tab="login">Iniciar sesión</button>
-        <button class="tab ${mode === 'register' ? 'active' : ''}" data-tab="register">Crear cuenta</button>
+    <div class="auth-split">
+      <aside class="auth-media">
+        <video class="auth-video" src="img/login/login.mp4" autoplay muted loop playsinline disablepictureinpicture controlslist="nodownload noplaybackrate"></video>
+        <div class="auth-media-overlay">
+          <img class="auth-media-logo" src="img/logo-full-glow.png" alt="Kronox Forge">
+        </div>
+      </aside>
+      <div class="auth-panel">
+        <button class="x-btn auth-x" data-close aria-label="Cerrar">${ICONS.x}</button>
+        <div class="modal-body auth-body">
+          <h2 class="auth-title" id="authTitle">Iniciar sesión</h2>
+          <p class="auth-promo hidden" id="authPromo">Crea una cuenta y sé el primero en conocer cada nueva <b>actualización</b>, <b>innovación</b> y <b>lanzamiento</b>.</p>
+          <p class="auth-sub" id="authSub"></p>
+          <form id="authForm" novalidate>
+            <div class="auth-row reg-only hidden">
+              <label class="field"><span>Nombre</span><input type="text" id="aName" placeholder="Juan"></label>
+              <label class="field"><span>Apellido</span><input type="text" id="aLast" placeholder="Pérez"></label>
+            </div>
+            <label class="field"><span>Correo electrónico</span><input type="email" id="aEmail" placeholder="tucorreo@ejemplo.com" autocomplete="email"></label>
+            <label class="field"><span>Contraseña</span>
+              <span class="pass-wrap">
+                <input type="password" id="aPass" placeholder="Mínimo 6 caracteres" autocomplete="current-password">
+                <button type="button" class="pass-eye" id="aEye" aria-label="Mostrar contraseña">${ICONS.eye || ICONS.search}</button>
+              </span>
+            </label>
+            <label class="check-line reg-only hidden"><input type="checkbox" id="aTerms"><span>Acepto los <b>Términos y Condiciones</b></span></label>
+            <div class="err-text" id="aErr"></div>
+            <button class="btn btn-primary btn-block" type="submit" id="aSubmit">Entrar</button>
+          </form>
+          <div class="auth-divider"><span id="authOr">O inicia sesión con</span></div>
+          <div class="auth-social">
+            <button type="button" class="btn auth-soc" data-soc="Google">${ICONS.googleG || ''}<span>Google</span></button>
+            <button type="button" class="btn auth-soc" data-soc="Apple">${ICONS.apple || ''}<span>Apple</span></button>
+          </div>
+        </div>
       </div>
-      <form id="authForm" novalidate>
-        <label class="field reg-only hidden"><span>Nombre completo</span><input type="text" id="aName" placeholder="Juan Pérez"></label>
-        <label class="field"><span>Correo electrónico</span><input type="email" id="aEmail" placeholder="tucorreo@ejemplo.com" autocomplete="email"></label>
-        <label class="field"><span>Contraseña</span><input type="password" id="aPass" placeholder="Mínimo 6 caracteres" autocomplete="current-password"></label>
-        <label class="field reg-only hidden"><span>Confirmar contraseña</span><input type="password" id="aPass2" placeholder="Repite la contraseña"></label>
-        <div class="err-text" id="aErr"></div>
-        <button class="btn btn-primary btn-block" type="submit" id="aSubmit">Entrar</button>
-      </form>
-      <div class="divider"></div>
-      <p class="hint center">Cuenta de prueba: <b>admin@kronoxlabs.com</b> / <b>Admin1234</b></p>
-    </div>`, { size: '' });
+    </div>`, { size: 'modal-xl auth-modal' });
 
   let cur = mode;
   const paint = () => {
-    $('#authTitle', m.el).textContent = cur === 'login' ? 'Iniciar sesión' : 'Crear cuenta';
-    $('#aSubmit', m.el).textContent = cur === 'login' ? 'Entrar' : 'Registrarme';
-    $$('.reg-only', m.el).forEach(el => el.classList.toggle('hidden', cur === 'login'));
-    $$('.tab', m.el).forEach(t => t.classList.toggle('active', t.dataset.tab === cur));
+    const reg = cur === 'register';
+    $('#authTitle', m.el).textContent = reg ? 'Crear una cuenta' : 'Iniciar sesión';
+    $('#authOr', m.el).textContent = reg ? 'O regístrate con' : 'O inicia sesión con';
+    $('#aSubmit', m.el).textContent = reg ? 'Crear cuenta' : 'Entrar';
+    $('#authSub', m.el).innerHTML = reg
+      ? '¿Ya tienes una cuenta? <a href="#" data-switch="login">Inicia sesión</a>'
+      : '¿Aún no tienes cuenta? <a href="#" data-switch="register">Regístrate</a>';
+    $$('.reg-only', m.el).forEach(el => el.classList.toggle('hidden', !reg));
+    $('#authPromo', m.el).classList.toggle('hidden', !reg);
+    $('#aPass', m.el).setAttribute('autocomplete', reg ? 'new-password' : 'current-password');
     $('#aErr', m.el).textContent = '';
+    $('[data-switch]', m.el)?.addEventListener('click', e => { e.preventDefault(); cur = e.target.dataset.switch; paint(); });
   };
-  $$('.tab', m.el).forEach(t => t.addEventListener('click', () => { cur = t.dataset.tab; paint(); }));
   paint();
+
+  // Mostrar / ocultar contraseña
+  $('#aEye', m.el)?.addEventListener('click', () => {
+    const inp = $('#aPass', m.el);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    $('#aEye', m.el).classList.toggle('on', inp.type === 'text');
+  });
+  // Botones sociales (demostración)
+  $$('[data-soc]', m.el).forEach(b => b.addEventListener('click', () => toast(`Registro con ${b.dataset.soc} disponible próximamente`)));
 
   const fail = msg => { $('#aErr', m.el).textContent = msg; };
   const validEmail = v => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v);
@@ -759,18 +797,18 @@ function authModal(mode = 'login') {
 
     const users = State.users;
     if (cur === 'register') {
-      const name = $('#aName', m.el).value.trim();
-      const pass2 = $('#aPass2', m.el).value;
-      if (name.length < 3) { $('#aName', m.el).classList.add('invalid'); return fail('Ingresa tu nombre completo.'); }
+      const first = $('#aName', m.el).value.trim();
+      const last = $('#aLast', m.el).value.trim();
+      const name = (first + ' ' + last).trim();
+      if (first.length < 2) { $('#aName', m.el).classList.add('invalid'); return fail('Ingresa tu nombre.'); }
       $('#aName', m.el).classList.remove('invalid');
-      if (pass !== pass2) { $('#aPass2', m.el).classList.add('invalid'); return fail('Las contraseñas no coinciden.'); }
-      $('#aPass2', m.el).classList.remove('invalid');
+      if (!$('#aTerms', m.el).checked) return fail('Debes aceptar los Términos y Condiciones.');
       if (users.some(u => u.email === email)) return fail('Ya existe una cuenta con ese correo.');
       const nu = { email, password: pass, name, phone: '' };
       users.push(nu); State.saveUsers(users);
       State.session = { email, name };
       seedHistory(email);
-      toast('Cuenta creada. Bienvenido, ' + name.split(' ')[0], 'ok');
+      toast('Cuenta creada. Bienvenido, ' + (first || name), 'ok');
     } else {
       const u = users.find(x => x.email === email && x.password === pass);
       if (!u) return fail('Correo o contraseña incorrectos.');

@@ -561,17 +561,17 @@ function renderNav() {
       </div>
     </div>
     <div class="mobile-menu" id="mobileMenu">
-      <div class="mm-sec">
-        <div class="mm-h">Categorías</div>
-        <div class="mm-cats">
-          <a href="catalogo.html">Todas</a>
-          ${CATEGORIES.map(c => `<a href="catalogo.html?cat=${c.id}">${c.name}</a>`).join('')}
-        </div>
+      <a class="mm-link ${PAGE === 'inicio' ? 'active' : ''}" href="index.html"><span>Inicio</span><svg class="mm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
+      <button type="button" class="mm-link mm-cat-toggle" id="mmCatToggle" aria-expanded="false"><span>Categorías</span><svg class="mm-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <div class="mm-cat-panel hidden" id="mmCatPanel">
+        <a href="catalogo.html">Todas</a>
+        ${CATEGORIES.map(c => `<a href="catalogo.html?cat=${c.id}">${c.name}</a>`).join('')}
       </div>
-      <div class="mm-sec">
-        <div class="mm-h">Navegación</div>
-        ${NAV_LINKS.map(l => `<a class="${PAGE === l.page ? 'active' : ''}" href="${l.href}">${l.label}</a>`).join('')}
-      </div>
+      <a class="mm-link ${PAGE === 'compatibilidad' ? 'active' : ''}" href="compatibilidad.html"><span>Compatibilidad</span><svg class="mm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="mm-link ${PAGE === 'cotizador' ? 'active' : ''}" href="cotizador.html"><span>Cotizador</span><svg class="mm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="mm-link ${PAGE === 'recomendador' ? 'active' : ''}" href="recomendador.html"><span>Recomendador</span><svg class="mm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="mm-link ${PAGE === 'nosotros' ? 'active' : ''}" href="nosotros.html"><span>Nosotros</span><svg class="mm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a class="mm-link ${PAGE === 'cuenta' ? 'active' : ''}" href="cuenta.html"><span>Mi cuenta</span><svg class="mm-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></a>
     </div>
   </nav>`;
 
@@ -580,6 +580,17 @@ function renderNav() {
     burger.addEventListener('click', e => { e.stopPropagation(); $('#mobileMenu')?.classList.toggle('open'); });
   }
   document.addEventListener('click', e => { if (!e.target.closest('.nav')) $('#mobileMenu')?.classList.remove('open'); });
+
+  // Menú móvil: "Categorías" colapsado por defecto, se despliega solo al tocarlo
+  const mmCatToggle = $('#mmCatToggle'), mmCatPanel = $('#mmCatPanel');
+  if (mmCatToggle && mmCatPanel) {
+    mmCatToggle.addEventListener('click', e => {
+      e.stopPropagation();
+      const open = mmCatPanel.classList.toggle('hidden');
+      mmCatToggle.setAttribute('aria-expanded', String(!open));
+      mmCatToggle.classList.toggle('open', !open);
+    });
+  }
 
   const catBtn = $('#navCatBtn'), catMega = $('#catMega');
   if (catBtn && catMega) {

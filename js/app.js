@@ -68,7 +68,10 @@ const ICONS = {
   tag: ico('<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="7.5" r="1.2"/>'),
   eye: ico('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>'),
   googleG: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"/><path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.5 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.8V6.5H1.4a12 12 0 0 0 0 11z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.5l4 3.1C6.3 6.8 8.9 4.8 12 4.8z"/></svg>',
-  apple: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.6.7 2.8.7c1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4s-2.2-.9-2.4-3.3zM14.2 5.9c.6-.7 1-1.8.9-2.9-.9 0-2 .6-2.6 1.4-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>'
+  apple: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.6.7 2.8.7c1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4s-2.2-.9-2.4-3.3zM14.2 5.9c.6-.7 1-1.8.9-2.9-.9 0-2 .6-2.6 1.4-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>',
+  wallet: ico('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/>'),
+  lock: ico('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'),
+  shield: ico('<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/>')
 };
 const icon = (n, cls = '') => `<span class="${cls}">${ICONS[n] || ICONS.box}</span>`;
 
@@ -329,6 +332,14 @@ const PRODUCTS = [
     specs:{Tipo:'Torre de aire, 1 ventilador de 120 mm',Altura:'158 mm',Ventilador:'Noctua NF-F12 PWM (300-1500 RPM)','Nivel de ruido':'22.4 dB(A) máx.','Flujo de aire':'93.4 m³/h',Heatpipes:'5 de cobre de 6 mm',Sockets:'Intel LGA1700/1200/115x, AMD AM5/AM4/AM3(+)',TDP:'Recomendado para CPUs de hasta 180 W con buen flujo',Garantía:'6 años'} }
 ];
 
+/* Catálogo administrable desde el panel admin (carpeta admin/).
+   Si el admin guardó cambios en localStorage, se aplican sobre PRODUCTS
+   en memoria (el arreglo es mutable y todo el sitio lo comparte). */
+(function applyAdminCatalog() {
+  const cat = Store.get('admin_catalog', null);
+  if (Array.isArray(cat)) { PRODUCTS.length = 0; PRODUCTS.push(...cat); }
+})();
+
 const byId = id => PRODUCTS.find(p => p.id === id);
 const byCat = id => PRODUCTS.filter(p => p.category === id);
 const BRANDS = Array.from(new Set(PRODUCTS.map(p => p.brand))).sort();
@@ -348,7 +359,10 @@ const prodImg = p => {
   const key = p.name.replace(/"/g, '');
   return PROD_IMG_SET.has(key) ? 'img/Img/' + encodeURIComponent(key) + '.jpg' : '';
 };
-const catImg = p => prodImg(p) || CAT_IMG[p?.category] || '';
+/* Prefijo de ruta: dentro de /admin/ las imagenes relativas apuntan a ../img/... */
+const IMG_BASE = location.pathname.includes('/admin/') ? '../' : '';
+const withBase = s => (s && !/^(https?:)?\/\//i.test(s) && !s.startsWith('/') && !s.startsWith('data:')) ? IMG_BASE + s : s;
+const catImg = p => withBase(p.img || prodImg(p) || CAT_IMG[p?.category] || '');
 const thumbHTML = (p, cls) => catImg(p)
   ? `<img class="${cls}" src="${catImg(p)}" alt="" loading="lazy">`
   : `<span class="picon" style="width:34px;height:34px">${ICONS[p.icon] || ICONS.box}</span>`;
@@ -409,8 +423,85 @@ const PROMOS = {
   VERANO5:  { pct:5,  label:'VERANO5',  desc:'Temporada' },
   LAUNCH50: { pct:50, label:'LAUNCH50', desc:'Lanzamiento especial' }
 };
+/* Cupones administrables: se aplican los códigos guardados por el admin,
+   incluidas las eliminaciones (claves que ya no existen). */
+(function applyAdminPromos() {
+  const pro = Store.get('admin_promos', null);
+  if (pro && typeof pro === 'object' && !Array.isArray(pro)) {
+    Object.keys(PROMOS).forEach(k => { if (!(k in pro)) delete PROMOS[k]; });
+    Object.assign(PROMOS, pro);
+  }
+})();
 const IVA = 0.13;
 const TEST_USER = { email:'admin@kronoxlabs.com', password:'Admin1234', name:'Administrador', phone:'+503 7000-0000' };
+
+/* ============================================================
+   ACCESO CON GOOGLE (Google Identity Services)
+   Para activarlo:
+   1) Crea un "ID de cliente de OAuth" en https://console.cloud.google.com
+      (APIs y servicios > Credenciales > Crear credenciales > ID de cliente OAuth,
+       tipo "Aplicacion web").
+   2) En "Origenes de JavaScript autorizados" agrega la URL donde publicas el sitio
+      (por ejemplo https://tudominio.com). El acceso con Google NO funciona abriendo
+      el archivo con doble clic (file://): el sitio debe servirse por http/https.
+   3) Pega el ID de cliente entre las comillas de abajo.
+   ============================================================ */
+const GOOGLE_CLIENT_ID = '77666275658-9qlbm5opre7hp436qioi4hqunregjjqv.apps.googleusercontent.com'; // <-- pega aqui tu ID de cliente de Google
+
+let _gisPromise = null;
+function ensureGis() {
+  if (window.google && google.accounts && google.accounts.id) return Promise.resolve();
+  if (_gisPromise) return _gisPromise;
+  _gisPromise = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true; s.defer = true;
+    s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+  return _gisPromise;
+}
+function decodeJwt(t) {
+  try {
+    const p = (t || '').split('.')[1];
+    const j = decodeURIComponent(atob(p.replace(/-/g, '+').replace(/_/g, '/'))
+      .split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+    return JSON.parse(j);
+  } catch (e) { return null; }
+}
+function handleGoogleCredential(resp, m) {
+  const data = decodeJwt(resp && resp.credential);
+  if (!data || !data.email) { toast('No se pudo iniciar sesion con Google', 'err'); return; }
+  const email = String(data.email).toLowerCase();
+  const name = data.name || [data.given_name, data.family_name].filter(Boolean).join(' ').trim() || email.split('@')[0];
+  const users = State.users;
+  let u = users.find(x => x.email === email);
+  if (!u) { u = { email, password: '', name, phone: '', google: true }; users.push(u); State.saveUsers(users); }
+  State.session = { email: u.email, name: u.name };
+  seedHistory(email);
+  toast('Sesion iniciada con Google como ' + (u.name || email), 'ok');
+  if (m && m.close) m.close();
+  renderNav();
+  if (PAGE === 'cuenta') renderAccount();
+  document.dispatchEvent(new CustomEvent('kf:auth'));
+}
+function mountGoogleButton(m) {
+  const host = $('#googleBtnHost', m.el);
+  if (!host) return;
+  if (!GOOGLE_CLIENT_ID) {
+    $('[data-soc="Google"]', host)?.addEventListener('click', () =>
+      toast('Para activar el acceso con Google, configura tu ID de cliente de Google.', 'err'));
+    return;
+  }
+  ensureGis().then(() => {
+    google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: resp => handleGoogleCredential(resp, m) });
+    host.innerHTML = '';
+    google.accounts.id.renderButton(host, { theme: 'outline', size: 'large', width: Math.round(host.offsetWidth) || 300, text: 'continue_with', shape: 'pill', logo_alignment: 'center' });
+  }).catch(() => {
+    $('[data-soc="Google"]', host)?.addEventListener('click', () =>
+      toast('No se pudo cargar Google. Revisa tu conexion a internet.', 'err'));
+  });
+}
 
 /* ------------------------------------------------------------
    3. Estado global
@@ -615,7 +706,7 @@ function renderNav() {
       }));
     }
   }
-  $('#loginBtn')?.addEventListener('click', () => authModal('login'));
+  $('#loginBtn')?.addEventListener('click', () => authModal('register'));
   const ub = $('#userBtn'), um = $('#userMenu');
   if (ub) ub.addEventListener('click', e => { e.stopPropagation(); um.classList.toggle('hidden'); });
   document.addEventListener('click', () => um?.classList.add('hidden'));
@@ -750,7 +841,7 @@ function authModal(mode = 'login') {
           </form>
           <div class="auth-divider"><span id="authOr">O inicia sesión con</span></div>
           <div class="auth-social">
-            <button type="button" class="btn auth-soc" data-soc="Google">${ICONS.googleG || ''}<span>Google</span></button>
+            <div class="auth-soc-google" id="googleBtnHost"><button type="button" class="btn auth-soc" data-soc="Google">${ICONS.googleG || ''}<span>Google</span></button></div>
             <button type="button" class="btn auth-soc" data-soc="Apple">${ICONS.apple || ''}<span>Apple</span></button>
           </div>
         </div>
@@ -780,8 +871,9 @@ function authModal(mode = 'login') {
     inp.type = inp.type === 'password' ? 'text' : 'password';
     $('#aEye', m.el).classList.toggle('on', inp.type === 'text');
   });
-  // Botones sociales (demostración)
-  $$('[data-soc]', m.el).forEach(b => b.addEventListener('click', () => toast(`Registro con ${b.dataset.soc} disponible próximamente`)));
+  // Boton social de Apple (demostracion). Google se gestiona aparte (acceso real).
+  $$('[data-soc="Apple"]', m.el).forEach(b => b.addEventListener('click', () => toast('Registro con Apple disponible proximamente')));
+  mountGoogleButton(m);
 
   const fail = msg => { $('#aErr', m.el).textContent = msg; };
   const validEmail = v => /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v);
@@ -835,11 +927,25 @@ function toggleFav(id) {
   if (PAGE === 'index') renderCatalog();
 }
 function addToQuote(id, qty = 1) {
+  const p = byId(id);
+  if (p && p.stock <= 0) { toast(`${p.name} está agotado`, 'err'); return; }
   const q = State.quote;
   const it = q.items.find(i => i.id === id);
+  const current = it ? it.qty : 0;
+  const max = p ? p.stock : 99;
+  // No se puede agregar por encima del stock disponible
+  if (current + qty > max) {
+    const can = Math.max(0, max - current);
+    if (can <= 0) { toast(`No puedes comprar más de ${max} unidades: es el stock disponible`, 'err'); return; }
+    qty = can;
+    if (it) it.qty += qty; else q.items.push({ id, qty });
+    State.quote = q; renderNav();
+    toast(`Solo hay ${max} unidades en stock de ${p.name}`, 'err');
+    return;
+  }
   if (it) it.qty += qty; else q.items.push({ id, qty });
   State.quote = q; renderNav();
-  toast(`${byId(id)?.name || id} agregado al cotizador`, 'ok');
+  toast(`${p?.name || id} agregado al cotizador`, 'ok');
 }
 
 /* ---- Modal de detalle de producto ---- */
@@ -1804,7 +1910,7 @@ function renderQuote() {
       <div class="q-card-side">
         <span class="qty">
           <button data-dec="${i.id}" aria-label="Disminuir">−</button>
-          <input type="number" min="1" max="99" value="${i.qty}" data-qty="${i.id}" aria-label="Cantidad">
+          <input type="number" min="1" max="${Math.max(1, i.p.stock)}" value="${i.qty}" data-qty="${i.id}" aria-label="Cantidad">
           <button data-inc="${i.id}" aria-label="Aumentar">+</button>
         </span>
         <span class="q-card-sub mono"><b>${money(i.p.price * i.qty)}</b></span>
@@ -1829,8 +1935,9 @@ function renderQuote() {
       <div class="err-text" id="promoErr"></div>
       <p class="hint">Disponibles: ${Object.keys(PROMOS).join(', ')}</p>`}
     <div class="divider"></div>
-    <div class="btn-group quote-actions" style="flex-wrap:wrap;gap:8px">
-      <button class="btn btn-primary btn-sm" id="btnPdf">${ICONS.print} PDF</button>
+    <button class="btn btn-primary btn-block btn-pay" id="btnPay">${State.session ? `${ICONS.cart} Comprar y pagar con tarjeta` : `${ICONS.user} Regístrate para poder comprar con nosotros`}</button>
+    <div class="btn-group quote-actions" style="flex-wrap:wrap;gap:8px;margin-top:8px">
+      <button class="btn btn-sm" id="btnPdf">${ICONS.print} PDF</button>
       <button class="btn btn-sm" id="btnMail">${ICONS.mail} Correo</button>
       ${State.session ? `<button class="btn btn-sm" id="btnSave">${ICONS.box} Guardar</button>` : `<button class="btn btn-sm" id="btnLoginQuote">${ICONS.user} Inicia sesión</button>`}
       <button class="btn btn-ghost btn-sm btn-clear" id="btnClear">${ICONS.trash} Vaciar</button>
@@ -1843,23 +1950,33 @@ function renderQuote() {
   }));
   $$('[data-qty]').forEach(inp => inp.addEventListener('change', () => {
     const q2 = State.quote, it = q2.items.find(i => i.id === inp.dataset.qty);
-    if (it) { it.qty = clamp(parseInt(inp.value) || 1, 1, 99); State.quote = q2; renderQuote(); }
+    if (it) {
+      const p = byId(it.id);
+      const max = p ? Math.max(1, p.stock) : 99;
+      const typed = parseInt(inp.value) || 1;
+      if (p && typed > p.stock) toast(`No puedes comprar más de ${p.stock} unidades: es el stock disponible`, 'err');
+      it.qty = clamp(typed, 1, max); State.quote = q2; renderQuote();
+    }
   }));
   $('#applyPromo')?.addEventListener('click', applyPromo);
   $('#promoInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); applyPromo(); } });
   $('#rmPromo')?.addEventListener('click', () => { const q2 = State.quote; q2.promo = null; State.quote = q2; renderQuote(); toast('Código quitado'); });
   $('#btnPdf')?.addEventListener('click', printQuote);
+  $('#btnPay')?.addEventListener('click', () => { if (State.session) payModal(); else authModal('register'); });
   $('#btnMail')?.addEventListener('click', mailQuote);
   $('#btnClear')?.addEventListener('click', () => { State.quote = { items: [], promo: null }; renderQuote(); toast('Cotización vaciada'); });
   $('#btnSave')?.addEventListener('click', saveQuote);
-  $('#btnLoginQuote')?.addEventListener('click', () => authModal('login'));
+  $('#btnLoginQuote')?.addEventListener('click', () => authModal('register'));
   renderNav();
 }
 
 function setQty(id, _cur, delta) {
   const q = State.quote, it = q.items.find(i => i.id === id);
   if (!it) return;
-  it.qty = clamp(it.qty + delta, 1, 99);
+  const p = byId(it.id);
+  const max = p ? Math.max(1, p.stock) : 99;
+  if (delta > 0 && p && it.qty >= p.stock) { toast(`No puedes comprar más de ${p.stock} unidades: es el stock disponible`, 'err'); return; }
+  it.qty = clamp(it.qty + delta, 1, max);
   State.quote = q; renderQuote();
 }
 
@@ -1946,13 +2063,346 @@ Cotización válida por 15 días. Precios en USD, sujetos a disponibilidad.`;
 
 function saveQuote() {
   const s = State.session;
-  if (!s) return authModal('login');
+  if (!s) return authModal('register');
   if (!State.quote.items.length) return toast('La cotización está vacía', 'err');
   addHistory(s.email, quoteRecord());
   toast('Cotización guardada en tu historial', 'ok');
 }
 
 function initCotizador() { renderQuote(); }
+
+/* ---- Pago con tarjeta (demostración) ---- */
+const CARD_BRANDS = { '4': 'Visa', '5': 'Mastercard', '3': 'American Express', '6': 'Discover' };
+function detectBrand(num) { return CARD_BRANDS[(num || '')[0]] || ''; }
+function brandLogo(brand) {
+  if (brand === 'Mastercard') return '<span class="mc-logo"><i></i><i></i></span>';
+  if (brand === 'Visa') return '<span class="brand-word visa">VISA</span>';
+  if (brand === 'American Express') return '<span class="brand-word amex">AMEX</span>';
+  if (brand === 'Discover') return '<span class="brand-word disc">DISCOVER</span>';
+  return '';
+}
+function luhnOk(num) {
+  const d = (num || '').replace(/\D/g, '');
+  if (d.length < 13) return false;
+  let sum = 0, alt = false;
+  for (let i = d.length - 1; i >= 0; i--) {
+    let n = +d[i];
+    if (alt) { n *= 2; if (n > 9) n -= 9; }
+    sum += n; alt = !alt;
+  }
+  return sum % 10 === 0;
+}
+function randomCard() {
+  const names = ['JUAN PEREZ', 'MARIA LOPEZ', 'CARLOS RAMIREZ', 'ANA MARTINEZ', 'LUIS GOMEZ', 'SOFIA REYES'];
+  const base = '4' + Array.from({ length: 14 }, () => Math.floor(Math.random() * 10)).join('');
+  let sum = 0, alt = true;
+  for (let i = base.length - 1; i >= 0; i--) { let n = +base[i]; if (alt) { n *= 2; if (n > 9) n -= 9; } sum += n; alt = !alt; }
+  const check = (10 - (sum % 10)) % 10;
+  const num = (base + check).replace(/(.{4})/g, '$1 ').trim();
+  const mm = String(1 + Math.floor(Math.random() * 12)).padStart(2, '0');
+  const yy = String(26 + Math.floor(Math.random() * 6));
+  const cvv = String(Math.floor(100 + Math.random() * 900));
+  return { name: names[Math.floor(Math.random() * names.length)], num, exp: `${mm}/${yy}`, cvv };
+}
+
+function payModal() {
+  const q = State.quote;
+  if (!q.items.length) return toast('La cotización está vacía', 'err');
+  const items = q.items.map(i => ({ ...i, p: byId(i.id) })).filter(i => i.p);
+  // No se permite pagar si algun articulo supera el stock disponible
+  const over = items.filter(i => i.qty > i.p.stock);
+  if (over.length) {
+    toast(`No puedes comprar más del stock disponible: ${over[0].p.name} (solo ${over[0].p.stock})`, 'err');
+    return;
+  }
+  const t = quoteTotals(items.map(i => ({ id: i.id, qty: i.qty })), q.promo);
+  const orderId = '#' + new Date().getFullYear() + '-' + String(Math.floor(1000 + Math.random() * 9000));
+  let brand = '';
+
+  const m = openModal(`
+    <div class="pay2">
+      <button class="x-btn pay2-x" data-close aria-label="Cerrar">${ICONS.x}</button>
+      <div class="pay2-head">
+        <span class="pay2-ic">${ICONS.lock}</span>
+        <h3>Pago seguro</h3>
+        <p>Tu información está cifrada y protegida</p>
+      </div>
+      <div class="pay2-order">
+        <div><span class="k">Total a pagar</span><span class="o">Pedido ${orderId}</span></div>
+        <b class="mono amt">${money(t.total)}</b>
+      </div>
+      <div class="pay2-card" id="payCard">
+        <div class="p2c-top"><span class="p2c-chip"></span><span class="p2c-logo" id="p2cLogo"></span></div>
+        <div class="p2c-num mono" id="p2cNum">•••• •••• •••• ••••</div>
+        <div class="p2c-bot">
+          <span class="p2c-holder"><small>TITULAR</small><br><span id="p2cName">NOMBRE APELLIDO</span></span>
+          <span class="mono" id="p2cExp">MM/AA</span>
+        </div>
+      </div>
+      <div class="pay2-brands" id="payBrands">
+        <button type="button" data-brand="Visa">VISA</button>
+        <button type="button" data-brand="Mastercard">MASTERCARD</button>
+        <button type="button" data-brand="American Express">AMEX</button>
+        <button type="button" data-brand="Discover">DISCOVER</button>
+      </div>
+      <form id="payForm" novalidate>
+        <label class="field"><span>Número de tarjeta</span><input type="text" id="pcNum" inputmode="numeric" placeholder="0000 0000 0000 0000" maxlength="19" autocomplete="cc-number"></label>
+        <label class="field"><span>Nombre en la tarjeta</span><input type="text" id="pcName" placeholder="Ej. María García" autocomplete="cc-name"></label>
+        <div class="pay-row">
+          <label class="field"><span>Vencimiento</span><input type="text" id="pcExp" inputmode="numeric" placeholder="MM / AA" maxlength="7" autocomplete="cc-exp"></label>
+          <label class="field"><span>CVV</span>
+            <span class="pass-wrap">
+              <input type="password" id="pcCvv" inputmode="numeric" placeholder="•••" maxlength="4" autocomplete="cc-csc">
+              <button type="button" class="pass-eye" id="cvvEye" aria-label="Mostrar CVV">${ICONS.eye}</button>
+            </span>
+          </label>
+        </div>
+        <div class="err-text" id="payErr"></div>
+        <button type="button" class="pay2-fill" id="payFill">${ICONS.spark} Rellenar con datos de prueba</button>
+        <button type="submit" class="pay2-btn" id="payBtn">${ICONS.wallet}<span>Pagar ${money(t.total)}</span></button>
+        <p class="pay2-note">${ICONS.lock} Pago de demostración. No se procesa ningún cobro real.</p>
+      </form>
+    </div>`, { size: 'modal-lg pay2-modal' });
+
+  const nameI = $('#pcName', m.el), numI = $('#pcNum', m.el), expI = $('#pcExp', m.el), cvvI = $('#pcCvv', m.el);
+  const setBrand = (b, manual) => {
+    if (manual) brand = b;
+    else { const d = detectBrand(numI.value.replace(/\s/g, '')); if (d) brand = d; }
+    $('#p2cLogo', m.el).innerHTML = brandLogo(brand);
+    $$('#payBrands button', m.el).forEach(x => x.classList.toggle('on', x.dataset.brand === brand));
+  };
+  const sync = () => {
+    $('#p2cName', m.el).textContent = (nameI.value || 'NOMBRE APELLIDO').toUpperCase();
+    $('#p2cNum', m.el).textContent = numI.value || '•••• •••• •••• ••••';
+    $('#p2cExp', m.el).textContent = expI.value || 'MM/AA';
+  };
+  numI.addEventListener('input', () => {
+    let d = numI.value.replace(/\D/g, '').slice(0, 16);
+    numI.value = d.replace(/(.{4})/g, '$1 ').trim();
+    setBrand(); sync();
+  });
+  expI.addEventListener('input', () => {
+    let d = expI.value.replace(/\D/g, '').slice(0, 4);
+    if (d.length >= 3) d = d.slice(0, 2) + ' / ' + d.slice(2);
+    expI.value = d; sync();
+  });
+  cvvI.addEventListener('input', () => { cvvI.value = cvvI.value.replace(/\D/g, '').slice(0, 4); });
+  nameI.addEventListener('input', sync);
+  $$('#payBrands button', m.el).forEach(b => b.addEventListener('click', () => setBrand(b.dataset.brand, true)));
+  $('#cvvEye', m.el).addEventListener('click', () => {
+    cvvI.type = cvvI.type === 'password' ? 'text' : 'password';
+    $('#cvvEye', m.el).classList.toggle('on', cvvI.type === 'text');
+  });
+
+  $('#payFill', m.el).addEventListener('click', () => {
+    const c = randomCard();
+    nameI.value = c.name; numI.value = c.num; expI.value = c.exp.replace('/', ' / '); cvvI.value = c.cvv;
+    setBrand(); sync();
+  });
+
+  const fail = msg => { $('#payErr', m.el).textContent = msg; };
+  $('#payForm', m.el).addEventListener('submit', e => {
+    e.preventDefault();
+    const name = nameI.value.trim();
+    const num = numI.value.replace(/\s/g, '');
+    const exp = expI.value.replace(/\s/g, '');
+    const cvv = cvvI.value.trim();
+    if (!luhnOk(num)) return fail('El número de tarjeta no es válido.');
+    if (name.length < 3) return fail('Ingresa el nombre que aparece en la tarjeta.');
+    if (!/^\d{2}\/\d{2}$/.test(exp)) return fail('Ingresa el vencimiento en formato MM / AA.');
+    const mm = +exp.slice(0, 2);
+    if (mm < 1 || mm > 12) return fail('El mes de vencimiento no es válido.');
+    if (cvv.length < 3) return fail('El CVV debe tener 3 o 4 dígitos.');
+
+    const btn = $('#payBtn', m.el);
+    btn.disabled = true; btn.classList.add('loading');
+    btn.innerHTML = '<span class="pay2-spin"></span><span>Procesando pago…</span>';
+    setTimeout(() => {
+      const rec = quoteRecord();
+      rec.paid = true;
+      rec.order = orderId;
+      rec.card = '•••• ' + num.slice(-4);
+      rec.cardLast4 = num.slice(-4);
+      rec.brand = brand || detectBrand(num) || 'Tarjeta';
+      if (State.session) addHistory(State.session.email, rec);
+      State.quote = { items: [], promo: null };
+      m.close();
+      paySuccess(rec);
+    }, 1600);
+  });
+}
+
+function paySuccess(rec) {
+  const last4 = rec.cardLast4 || (rec.card || '').replace(/\D/g, '').slice(-4) || '****';
+  const masked = '****-****-****-' + last4;
+  const m = openModal(`
+    <div class="modal-body center pay-done">
+      <div class="pay-check">${ICONS.check}</div>
+      <h3 style="margin:12px 0 4px">¡Pago exitoso!</h3>
+      <p class="tiny muted" style="margin:0 0 14px">Gracias por tu compra en Kronox Forge.</p>
+      <div class="pay-rcpt">
+        <div class="kv"><span class="k">N.º de pedido</span><b class="mono">${esc(rec.order)}</b></div>
+        <div class="kv"><span class="k">N.º de tarjeta</span><b class="mono">${esc(masked)}</b></div>
+        <div class="kv"><span class="k">Marca</span><b>${esc(rec.brand)}</b></div>
+        <div class="kv"><span class="k">Monto pagado</span><b class="mono">${money(rec.total)}</b></div>
+        <div class="kv"><span class="k">Fecha</span><b>${esc(rec.date)}</b></div>
+      </div>
+      <p class="hint center" style="margin:12px 0 0">${ICONS.info} Compra de demostración. No se realizó ningún cobro real.</p>
+      <button class="btn btn-primary btn-block" id="dlReceipt" style="margin-top:14px">${ICONS.print} Descargar comprobante de pago</button>
+      <button class="btn btn-block" data-close style="margin-top:8px">Listo</button>
+    </div>`, { size: 'modal-lg' });
+  $('#dlReceipt', m.el)?.addEventListener('click', () => downloadReceipt(rec));
+  toast('Pago realizado · Pedido ' + rec.order, 'ok');
+  renderQuote(); renderNav();
+}
+
+/* ---- Generador de PDF real (sin librerias externas, 100% offline) ---- */
+function _pdfEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)').replace(/[\r\n]+/g, ' '); }
+function _latin1(str) {
+  let out = '';
+  for (const ch of String(str)) { let c = ch.codePointAt(0); if (c === 0x20AC) c = 0x80; else if (c > 0xFF) c = 0x3F; out += String.fromCharCode(c); }
+  return out;
+}
+function buildReceiptPDF(rec, masked, now) {
+  const m2 = v => '$' + (Number(v) || 0).toFixed(2);
+  const seg = [];
+  let y = 792;
+  const line = (text, size, bold, x) => { seg.push({ x: x || 56, y: y, size: size || 11, bold: !!bold, text: text }); };
+  const nl = px => { y -= (px || 18); };
+  line('KRONOX FORGE', 22, true); nl(20);
+  line('Comprobante de pago  -  PAGADO', 12, false); nl(15);
+  line('Hardware y componentes verificados - San Salvador, El Salvador', 9, false); nl(12);
+  line('kronoxforgetechnology@gmail.com  -  +503 7200 8919', 9, false); nl(24);
+  const kv = (k, v) => { seg.push({ x: 56, y: y, size: 11, bold: false, text: k }); seg.push({ x: 250, y: y, size: 11, bold: true, text: v }); nl(18); };
+  kv('N.o de pedido:', rec.order || '-');
+  kv('Fecha:', rec.date || '-');
+  kv('Cliente:', rec.client || 'Cliente');
+  kv('Correo:', rec.email || '-');
+  kv('N.o de tarjeta:', masked);
+  kv('Marca de tarjeta:', rec.brand || 'Tarjeta');
+  nl(10);
+  line('PRODUCTOS', 12, true); nl(18);
+  seg.push({ x: 56, y: y, size: 9, bold: true, text: 'Producto' });
+  seg.push({ x: 330, y: y, size: 9, bold: true, text: 'Cant.' });
+  seg.push({ x: 400, y: y, size: 9, bold: true, text: 'Unitario' });
+  seg.push({ x: 480, y: y, size: 9, bold: true, text: 'Importe' }); nl(16);
+  (rec.items || []).forEach(i => {
+    let nm = String(i.name || ''); if (nm.length > 44) nm = nm.slice(0, 43) + '...';
+    seg.push({ x: 56, y: y, size: 10, bold: false, text: nm });
+    seg.push({ x: 336, y: y, size: 10, bold: false, text: String(i.qty) });
+    seg.push({ x: 400, y: y, size: 10, bold: false, text: m2(i.price) });
+    seg.push({ x: 480, y: y, size: 10, bold: false, text: m2(i.price * i.qty) });
+    nl(16);
+  });
+  nl(8);
+  const tr = (k, v, bold) => { seg.push({ x: 360, y: y, size: bold ? 12 : 11, bold: !!bold, text: k }); seg.push({ x: 480, y: y, size: bold ? 12 : 11, bold: !!bold, text: v }); nl(bold ? 20 : 17); };
+  tr('Subtotal', m2(rec.subtotal || 0));
+  if (rec.promo) tr('Desc. ' + rec.promo + ' (-' + (rec.pct || 0) + '%)', '-' + m2(rec.discount || 0));
+  tr('IVA 13%', m2(rec.tax || 0));
+  tr('TOTAL PAGADO', m2(rec.total || 0), true);
+  nl(16);
+  line('Comprobante generado el ' + now + '.', 8, false); nl(11);
+  line('Documento de demostracion: Kronox Forge no procesa cobros reales.', 8, false); nl(11);
+  line('Por seguridad solo se muestran los ultimos 4 digitos de la tarjeta.', 8, false);
+
+  let content = '0.07 0.13 0.23 rg\n';
+  content += '0.15 0.44 0.88 rg 56 800 483 2 re f\n0.07 0.13 0.23 rg\n';
+  for (const s of seg) {
+    content += 'BT /' + (s.bold ? 'F2' : 'F1') + ' ' + s.size + ' Tf 1 0 0 1 ' + s.x + ' ' + s.y + ' Tm (' + _pdfEsc(_latin1(s.text)) + ') Tj ET\n';
+  }
+
+  const objs = [];
+  objs[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+  objs[2] = '<< /Type /Pages /Kids [3 0 R] /Count 1 >>';
+  objs[3] = '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>';
+  objs[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+  objs[5] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+  objs[6] = '<< /Length ' + content.length + ' >>\nstream\n' + content + 'endstream';
+
+  let pdf = '%PDF-1.4\n';
+  const offsets = [];
+  for (let i = 1; i <= 6; i++) { offsets[i] = pdf.length; pdf += i + ' 0 obj\n' + objs[i] + '\nendobj\n'; }
+  const xref = pdf.length;
+  pdf += 'xref\n0 7\n0000000000 65535 f \n';
+  for (let i = 1; i <= 6; i++) { pdf += String(offsets[i]).padStart(10, '0') + ' 00000 n \n'; }
+  pdf += 'trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF';
+
+  const bytes = new Uint8Array(pdf.length);
+  for (let i = 0; i < pdf.length; i++) bytes[i] = pdf.charCodeAt(i) & 0xff;
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+/* ---- Comprobante de pago descargable (PDF real) ---- */
+function downloadReceipt(rec) {
+  const last4 = rec.cardLast4 || (rec.card || '').replace(/\D/g, '').slice(-4) || '****';
+  const masked = '****-****-****-' + last4;
+  const items = rec.items || [];
+  const rows = items.map(i => `<tr><td>${esc(i.name)}</td><td class="c">${i.qty}</td><td class="r">${money(i.price)}</td><td class="r">${money(i.price * i.qty)}</td></tr>`).join('');
+  const now = new Date().toLocaleString('es-SV');
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comprobante de pago ${esc(rec.order)} — Kronox Forge</title>
+<style>
+*{box-sizing:border-box}body{font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#f3f5f8;color:#1b2430;margin:0;padding:24px}
+.doc{max-width:720px;margin:0 auto;background:#fff;border:1px solid #e3e8ef;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(16,32,59,.08)}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:26px 28px;background:linear-gradient(135deg,#2b6fe0,#3f3ad6);color:#fff}
+.hd h1{margin:0;font-size:22px;letter-spacing:.02em}.hd .sub{font-size:12px;opacity:.9;margin-top:4px;line-height:1.5}
+.paid{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.5);padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700}
+.body{padding:24px 28px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;margin-bottom:20px}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;padding:8px 0;border-bottom:1px solid #eef1f5}
+.kv .k{color:#64748b}.kv b{font-weight:700}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+table{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;border-bottom:2px solid #e3e8ef;padding:8px 6px}
+td{padding:9px 6px;border-bottom:1px solid #eef1f5}.c{text-align:center}.r{text-align:right}
+.tot{margin-top:14px;margin-left:auto;width:280px}
+.tot .kv:last-child{border-bottom:none;font-size:16px}
+.grand{font-weight:800;color:#1b2430}
+.note{margin:22px 0 0;font-size:11.5px;color:#94a3b8;line-height:1.6;text-align:center}
+.btnbar{max-width:720px;margin:14px auto 0;text-align:center}
+.btnbar button{background:#2563eb;color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer}
+@media print{.btnbar{display:none}body{background:#fff;padding:0}.doc{border:none;box-shadow:none}}
+</style></head><body>
+<div class="doc">
+  <div class="hd">
+    <div><h1>KRONOX FORGE</h1><div class="sub">Hardware y componentes verificados<br>San Salvador, El Salvador · kronoxforgetechnology@gmail.com · +503 7200 8919</div></div>
+    <div style="text-align:right"><div class="paid">✓ PAGADO</div><div class="sub" style="margin-top:8px">Comprobante de pago</div></div>
+  </div>
+  <div class="body">
+    <div class="grid">
+      <div class="kv"><span class="k">N.º de pedido</span><b class="mono">${esc(rec.order || '')}</b></div>
+      <div class="kv"><span class="k">Fecha</span><b>${esc(rec.date || '')}</b></div>
+      <div class="kv"><span class="k">Cliente</span><b>${esc(rec.client || 'Cliente')}</b></div>
+      <div class="kv"><span class="k">Correo</span><b>${esc(rec.email || '—')}</b></div>
+      <div class="kv"><span class="k">N.º de tarjeta</span><b class="mono">${esc(masked)}</b></div>
+      <div class="kv"><span class="k">Marca de tarjeta</span><b>${esc(rec.brand || 'Tarjeta')}</b></div>
+    </div>
+    <table>
+      <thead><tr><th>Producto</th><th class="c">Cant.</th><th class="r">Unitario</th><th class="r">Importe</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="4">—</td></tr>'}</tbody>
+    </table>
+    <div class="tot">
+      <div class="kv"><span class="k">Subtotal</span><b class="mono">${money(rec.subtotal || 0)}</b></div>
+      ${rec.promo ? `<div class="kv"><span class="k">Descuento ${esc(rec.promo)} (−${rec.pct || 0}%)</span><b class="mono">−${money(rec.discount || 0)}</b></div>` : ''}
+      <div class="kv"><span class="k">IVA 13%</span><b class="mono">${money(rec.tax || 0)}</b></div>
+      <div class="kv"><span class="k grand">TOTAL PAGADO</span><b class="mono grand">${money(rec.total || 0)}</b></div>
+    </div>
+    <p class="note">Comprobante generado el ${esc(now)}.<br>Documento de demostración: Kronox Forge no procesa cobros reales. Por seguridad solo se muestran los últimos 4 dígitos de la tarjeta.</p>
+  </div>
+</div>
+<div class="btnbar"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div>
+</body></html>`;
+  void html;
+  const blob = buildReceiptPDF(rec, masked, now);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `comprobante-${String(rec.order || 'kronox').replace(/[^\w-]/g, '')}.pdf`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  toast('Comprobante PDF descargado', 'ok');
+}
 
 /* ------------------------------------------------------------
    11. Página: recomendador.html
@@ -2247,7 +2697,7 @@ function renderAccount() {
   const s = State.session;
   if (!s) {
     gate.classList.remove('hidden'); root.classList.add('hidden');
-    $('#gateLogin')?.addEventListener('click', () => authModal('login'));
+    $('#gateLogin')?.addEventListener('click', () => authModal('register'));
     return;
   }
   gate.classList.add('hidden'); root.classList.remove('hidden');
@@ -2306,6 +2756,7 @@ function renderAccount() {
           <div style="flex:1;min-width:0">
             <div class="row" style="gap:8px;flex-wrap:wrap">
               <b class="hist-id">${esc(c.id)}</b><span class="badge">${esc(c.date)}</span>
+              ${c.paid ? `<span class="badge badge-ok">${ICONS.check} Pagado</span>` : ''}
               ${c.promo ? `<span class="badge badge-ok">${esc(c.promo)} −${c.pct}%</span>` : ''}
               <span class="tiny muted">${c.items.reduce((n, i) => n + i.qty, 0)} artículos</span>
             </div>
@@ -2327,6 +2778,7 @@ function renderAccount() {
           <div class="kv"><span class="k">Fecha</span><span>${esc(c.date)}</span></div>
           <div class="kv"><span class="k">Cliente</span><span>${esc(c.client || u.name || '—')}</span></div>
           ${c.promo ? `<div class="kv"><span class="k">Cupón</span><span>${esc(c.promo)} (−${c.pct}%)</span></div>` : ''}
+          ${c.paid ? `<div class="kv"><span class="k">Pedido</span><span>${esc(c.order)} · ${esc(c.brand || 'Tarjeta')} ${esc(c.card || '')}</span></div>` : ''}
           <div class="divider"></div>
           <div class="pick-list" style="max-height:none">${c.items.map(i => `
             <div class="pick" style="cursor:default"><span class="p-main"><span class="slot-name" style="display:block">${esc(i.name)}</span>
@@ -2373,6 +2825,96 @@ function renderAccount() {
   }
 }
 
+/* ------------------------------------------------------------
+   12b. Pagina: nosotros.html — Comentarios
+   Solo usuarios con sesion iniciada pueden comentar.
+   Cada usuario puede editar o eliminar unicamente sus comentarios.
+   ------------------------------------------------------------ */
+function renderComments() {
+  const host = $('#commentsSection'); if (!host) return;
+  const s = State.session;
+  const list = Store.get('comments', []);
+  const items = list.map(c => {
+    const mine = s && c.email === s.email;
+    const initial = esc((c.name || 'U').trim().charAt(0).toUpperCase() || 'U');
+    return `<div class="cmt" data-cmt="${esc(c.id)}">
+      <div class="cmt-head">
+        <span class="cmt-ava">${initial}</span>
+        <div class="cmt-meta"><b>${esc(c.name || 'Usuario')}</b><span class="tiny muted">${esc(c.date)}${c.edited ? ' · editado' : ''}</span></div>
+        ${mine ? `<span class="cmt-acts">
+          <button class="btn btn-sm" data-edit="${esc(c.id)}">${ICONS.edit} Editar</button>
+          <button class="btn btn-sm btn-clear" data-del="${esc(c.id)}">${ICONS.trash}</button>
+        </span>` : ''}
+      </div>
+      <p class="cmt-text">${esc(c.text)}</p>
+    </div>`;
+  }).join('');
+
+  host.innerHTML = `
+    <h3 style="margin:0 0 4px">Comentarios</h3>
+    <p class="tiny muted" style="margin:0 0 16px">Cuéntanos tu experiencia con Kronox Forge.</p>
+    ${s ? `
+      <div class="cmt-form">
+        <textarea id="cmtInput" class="cmt-area" rows="3" maxlength="600" placeholder="Escribe un comentario como ${esc(s.name || s.email)}..."></textarea>
+        <div class="err-text" id="cmtErr"></div>
+        <button class="btn btn-primary" id="cmtSend">Publicar comentario</button>
+      </div>` : `
+      <div class="cmt-login">
+        <p class="tiny muted" style="margin:0 0 8px">Debes iniciar sesión para dejar un comentario.</p>
+        <button class="btn btn-primary btn-sm" id="cmtLogin">Iniciar sesión</button>
+      </div>`}
+    <div class="cmt-list">${items || '<p class="tiny muted" style="margin-top:16px">Aún no hay comentarios. ¡Sé el primero!</p>'}</div>`;
+
+  $('#cmtLogin', host)?.addEventListener('click', () => authModal('login'));
+  $('#cmtSend', host)?.addEventListener('click', () => {
+    if (!State.session) return authModal('login');
+    const inp = $('#cmtInput', host), err = $('#cmtErr', host);
+    const text = (inp.value || '').trim();
+    if (text.length < 2) { err.textContent = 'Escribe un comentario válido.'; return; }
+    const arr = Store.get('comments', []);
+    arr.unshift({ id: uid('cmt'), email: s.email, name: s.name || s.email, text, date: new Date().toISOString().slice(0, 10), edited: false });
+    Store.set('comments', arr.slice(0, 200));
+    toast('Comentario publicado', 'ok');
+    renderComments();
+  });
+  $$('[data-del]', host).forEach(b => b.addEventListener('click', () => {
+    if (!State.session) return;
+    let arr = Store.get('comments', []);
+    arr = arr.filter(c => !(c.id === b.dataset.del && c.email === State.session.email));
+    Store.set('comments', arr);
+    toast('Comentario eliminado');
+    renderComments();
+  }));
+  $$('[data-edit]', host).forEach(b => b.addEventListener('click', () => startEditComment(b.dataset.edit)));
+}
+
+function startEditComment(id) {
+  const host = $('#commentsSection'); const s = State.session; if (!host || !s) return;
+  const arr = Store.get('comments', []);
+  const c = arr.find(x => x.id === id && x.email === s.email); if (!c) return;
+  const node = $(`[data-cmt="${id}"]`, host); if (!node) return;
+  node.innerHTML = `
+    <textarea class="cmt-area" id="cmtEditArea" rows="3" maxlength="600">${esc(c.text)}</textarea>
+    <div class="btn-group" style="margin-top:8px">
+      <button class="btn btn-primary btn-sm" id="cmtSaveEdit">Guardar cambios</button>
+      <button class="btn btn-sm" id="cmtCancelEdit">Cancelar</button>
+    </div>`;
+  $('#cmtSaveEdit', node).addEventListener('click', () => {
+    const t = ($('#cmtEditArea', node).value || '').trim();
+    if (t.length < 2) { toast('El comentario no puede quedar vacío', 'err'); return; }
+    const a2 = Store.get('comments', []);
+    const target = a2.find(x => x.id === id && x.email === s.email);
+    if (target) { target.text = t; target.edited = true; Store.set('comments', a2); }
+    toast('Comentario actualizado', 'ok'); renderComments();
+  });
+  $('#cmtCancelEdit', node).addEventListener('click', renderComments);
+}
+
+function initNosotros() {
+  renderComments();
+  document.addEventListener('kf:auth', renderComments);
+}
+
 function initCuenta() {
   $$('.side-nav [data-tab]').forEach(b => b.addEventListener('click', e => {
     e.preventDefault(); ACC_TAB = b.dataset.tab; renderAccount();
@@ -2394,6 +2936,7 @@ function boot() {
   if (PAGE === 'cotizador') initCotizador();
   if (PAGE === 'recomendador') initRecomendador();
   if (PAGE === 'cuenta') initCuenta();
+  if (PAGE === 'nosotros') initNosotros();
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
 else boot();

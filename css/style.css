@@ -413,7 +413,9 @@ input[type=range].solo::-moz-range-thumb {
   background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;
   cursor: pointer; transition: all var(--t); white-space: nowrap;
 }
-.btn:hover { border-color: var(--hover-border); background: var(--surface-2); }
+/* Hover consistente: NUNCA se vuelve blanco; queda un tinte azul legible */
+.btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.btn:hover svg { color: var(--accent); }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 .btn-primary { background: var(--grad); background-size: 140% 140%; border-color: transparent; color: #fff; }
@@ -426,9 +428,19 @@ input[type=range].solo::-moz-range-thumb {
 .btn-danger:hover { background: #B91C1C; border-color: transparent; color: #fff; filter: brightness(1.03); }
 .btn-clear { color: var(--err); }
 .btn-clear:hover { background: var(--err-soft); border-color: var(--err); color: var(--err); }
+.btn-clear:hover svg { color: var(--err); }
+.btn-clear:hover { background: var(--err-soft); border-color: var(--err); color: var(--err); }
 .btn-sm { padding: 6px 11px; font-size: 12px; }
 .btn-block { width: 100%; }
 .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- Seguridad de tamaño para iconos SVG en linea ----------
+   Algunos iconos se insertan como SVG sin ancho/alto y, sin una regla,
+   crecian hasta ocupar toda la caja. Estas reglas los acotan; las reglas
+   mas especificas (.pay2-btn svg, .pay-check svg, etc.) siguen mandando. */
+.btn svg { width: 15px; height: 15px; flex: none; }
+.promo-badge svg { width: 15px; height: 15px; flex: none; }
+.hint svg { width: 14px; height: 14px; flex: none; vertical-align: -2px; }
 
 /* ---------- Badges / estados ---------- */
 .badge {

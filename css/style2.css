@@ -804,6 +804,10 @@ body[data-page="inicio"] .tile:hover .tile-img img { transform: scale(1.05); }
   .btn-group.quote-actions .btn svg { width: 15px; height: 15px; }
 }
 
+/* Boton principal del cotizador: acotar icono y altura */
+.btn-pay { font-size: 14px; padding: 11px 16px; }
+.btn-pay svg { width: 17px; height: 17px; flex: none; }
+
 /* ============================================================
    LOGIN / REGISTRO: diseno 2 columnas con video a la izquierda
    ============================================================ */
@@ -876,4 +880,158 @@ body[data-page="inicio"] .tile:hover .tile-img img { transform: scale(1.05); }
   .auth-panel { overflow: visible; }
   .auth-body { margin: 0; padding: 24px 20px; }
   .auth-row { grid-template-columns: 1fr; gap: 0; }
+}
+
+/* ============================================================
+   PAGO SEGURO CON TARJETA (demostracion)
+   ============================================================ */
+.pay2-modal { max-width: 440px; background: #101216; color: #e9edf3; border: 1px solid #20242c; }
+.pay2 { position: relative; padding: 26px 24px 22px; }
+.pay2-x { position: absolute; top: 12px; right: 12px; background: transparent; border: none; cursor: pointer; color: #7b828e; }
+.pay2-x:hover { color: #fff; }
+.pay2-head { text-align: center; margin-bottom: 18px; }
+.pay2-ic {
+  width: 48px; height: 48px; margin: 0 auto 10px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(56,132,255,.14); color: #4f9bff;
+}
+.pay2-ic svg { width: 24px; height: 24px; }
+.pay2-head h3 { margin: 0; font-size: 20px; font-weight: 800; color: #fff; }
+.pay2-head p { margin: 4px 0 0; font-size: 13px; color: #8b93a1; }
+.pay2-order {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; margin-bottom: 16px; border-radius: 12px;
+  background: #171a20; border: 1px solid #23272f;
+}
+.pay2-order .k { display: block; font-size: 13px; color: #c6ccd6; font-weight: 600; }
+.pay2-order .o { display: block; font-size: 11.5px; color: #7b828e; margin-top: 2px; }
+.pay2-order .amt { font-size: 24px; font-weight: 800; color: #fff; }
+.pay2-card {
+  position: relative; border-radius: 16px; padding: 18px 18px 16px; margin-bottom: 16px;
+  color: #fff; overflow: hidden; min-height: 148px;
+  background: linear-gradient(135deg, #5b2bb0 0%, #3f3ad6 50%, #2b6fe0 100%);
+  box-shadow: 0 12px 30px rgba(43,54,120,.45);
+}
+.pay2-card::after {
+  content: ''; position: absolute; top: -50%; right: -15%;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.18), transparent 70%);
+}
+.p2c-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; min-height: 30px; }
+.p2c-chip { width: 40px; height: 29px; border-radius: 6px; background: linear-gradient(135deg, #f0d98a, #cBa44f); box-shadow: inset 0 0 0 1px rgba(0,0,0,.1); }
+.p2c-logo { display: inline-flex; align-items: center; min-height: 28px; }
+.p2c-num { font-size: 20px; letter-spacing: .14em; margin-bottom: 18px; }
+.p2c-bot { display: flex; align-items: flex-end; justify-content: space-between; }
+.p2c-holder { font-size: 13px; letter-spacing: .03em; text-transform: uppercase; }
+.p2c-holder small { font-size: 9px; opacity: .7; letter-spacing: .12em; }
+.p2c-bot .mono { font-size: 13px; opacity: .95; }
+/* logos de marca */
+.brand-word { font-style: italic; font-weight: 800; font-size: 18px; letter-spacing: .02em; }
+.brand-word.amex, .brand-word.disc { font-style: normal; font-size: 14px; }
+.mc-logo { position: relative; display: inline-block; width: 46px; height: 28px; }
+.mc-logo i { position: absolute; top: 0; width: 28px; height: 28px; border-radius: 50%; }
+.mc-logo i:first-child { left: 0; background: #eb001b; }
+.mc-logo i:last-child { right: 0; background: #f79e1b; mix-blend-mode: screen; }
+.pay2-brands { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+.pay2-brands button {
+  padding: 9px 4px; border-radius: 9px; border: 1px solid #2a2f39; background: #171a20;
+  color: #aeb6c2; font-size: 10.5px; font-weight: 800; letter-spacing: .03em; cursor: pointer; transition: .15s;
+}
+.pay2-brands button:hover { border-color: #3d4553; color: #fff; }
+.pay2-brands button.on { border-color: #4f9bff; color: #fff; background: rgba(56,132,255,.14); }
+.pay2 .field { display: block; margin-bottom: 12px; }
+.pay2 .field > span { display: block; margin-bottom: 5px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #8b93a1; }
+.pay2 .field input {
+  width: 100%; padding: 11px 12px; border-radius: 10px;
+  background: #171a20; border: 1px solid #2a2f39; color: #fff; font-size: 14px;
+}
+.pay2 .field input::placeholder { color: #6b7280; }
+.pay2 .field input:focus { outline: none; border-color: #4f9bff; box-shadow: 0 0 0 3px rgba(56,132,255,.18); }
+.pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pay2 .pass-wrap { position: relative; display: block; }
+.pay2 .pass-wrap input { padding-right: 42px; }
+.pay2 .pass-eye { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; color: #7b828e; padding: 4px; display: inline-flex; }
+.pay2 .pass-eye:hover, .pay2 .pass-eye.on { color: #4f9bff; }
+.pay2 .pass-eye svg { width: 18px; height: 18px; }
+.pay2 .err-text { color: #ff7a7a; font-size: 12.5px; min-height: 16px; margin-bottom: 4px; }
+.pay2-fill {
+  width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 9px; border-radius: 10px; border: 1px dashed #2f3540; background: transparent;
+  color: #9aa2af; font-size: 12.5px; font-weight: 600; cursor: pointer; margin-bottom: 10px;
+}
+.pay2-fill:hover { border-color: #4f9bff; color: #cfe0ff; }
+.pay2-fill svg { width: 15px; height: 15px; }
+.pay2-btn {
+  width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 13px; border-radius: 12px; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #3b82f6, #2563eb); color: #fff; font-size: 15px; font-weight: 700;
+  box-shadow: 0 8px 22px rgba(37,99,235,.4);
+}
+.pay2-btn:hover { filter: brightness(1.06); }
+.pay2-btn:disabled { opacity: .85; cursor: default; }
+.pay2-btn svg { width: 19px; height: 19px; }
+.pay2-spin {
+  width: 17px; height: 17px; border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,.35); border-top-color: #fff;
+  display: inline-block; animation: pay2spin .7s linear infinite;
+}
+@keyframes pay2spin { to { transform: rotate(360deg); } }
+.pay2-note { margin: 12px 0 0; text-align: center; font-size: 11.5px; color: #7b828e; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.pay2-note svg { width: 13px; height: 13px; }
+
+/* Pago exitoso */
+.pay-done { padding: 26px 24px 24px; }
+.pay-check {
+  width: 60px; height: 60px; margin: 0 auto; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(45,190,110,.14); color: #2dbe6e;
+}
+.pay-check svg { width: 32px; height: 32px; }
+.pay-rcpt {
+  text-align: left; border: 1px solid var(--border); border-radius: 12px;
+  padding: 6px 14px; background: var(--surface-2);
+}
+.pay-rcpt .kv { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+.pay-rcpt .kv:last-child { border-bottom: none; }
+.pay-rcpt .k { color: var(--muted); }
+
+@media (max-width: 520px) {
+  .pay2 { padding: 22px 18px 18px; }
+  .p2c-num { font-size: 17px; }
+  .pay2-brands button { font-size: 9.5px; padding: 8px 2px; }
+}
+
+/* ============================================================
+   COMENTARIOS (pagina Nosotros)
+   ============================================================ */
+.cmt-area {
+  width: 100%; resize: vertical; min-height: 72px; padding: 11px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--text); font: inherit; font-size: 13.5px; line-height: 1.5;
+}
+.cmt-area:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.cmt-form { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.cmt-form .btn { align-self: flex-start; }
+.cmt-login {
+  padding: 16px; border: 1px dashed var(--border); border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.cmt-list { display: flex; flex-direction: column; gap: 12px; margin-top: 18px; }
+.cmt {
+  border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px;
+  background: var(--surface); box-shadow: var(--shadow-card);
+}
+.cmt-head { display: flex; align-items: center; gap: 11px; margin-bottom: 8px; }
+.cmt-ava {
+  width: 34px; height: 34px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700; font-size: 14px;
+  background: var(--accent-soft); color: var(--accent);
+}
+.cmt-meta { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.cmt-meta b { font-size: 13.5px; }
+.cmt-acts { margin-left: auto; display: flex; gap: 6px; flex: none; }
+.cmt-acts .btn { padding: 5px 9px; }
+.cmt-text { margin: 0; font-size: 13.5px; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+@media (max-width: 520px) {
+  .cmt-acts .btn { padding: 5px 7px; }
 }

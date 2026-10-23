@@ -1099,3 +1099,70 @@ body[data-page="inicio"] .tile:hover .tile-img img { transform: scale(1.05); }
 @media (max-width: 520px) {
   .cmt-acts .btn { padding: 5px 7px; }
 }
+
+/* ============================================================
+   Reseñas globales (nosotros.html) — estilo tarjetas
+   ============================================================ */
+.rv-headline { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.rv-headline h3 { margin: 0 0 2px; font-size: 20px; font-weight: 800; color: var(--text); }
+.rv-avg { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.rv-note { margin: 0 0 14px; padding: 9px 12px; border-radius: 10px; background: var(--warn-soft); color: var(--warn); font-size: 12.5px; }
+
+.rv-stars { display: inline-flex; gap: 2px; font-size: 16px; line-height: 1; }
+.rv-star { color: #d7dce6; }
+.rv-star.on { color: #f5b301; }
+
+/* Formulario de reseña */
+.rv-form { background: var(--bg-alt); border: 1px solid var(--border-soft); border-radius: 14px; padding: 16px; margin-bottom: 22px; }
+.rv-form-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.rv-form-lbl { font-size: 11px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted-2); }
+.rv-rate { display: inline-flex; gap: 4px; }
+.rv-rate-star { background: transparent; border: none; cursor: pointer; font-size: 26px; line-height: 1; color: #d7dce6; padding: 0 1px; transition: color .12s, transform .12s; }
+.rv-rate-star:hover { transform: scale(1.12); }
+.rv-rate-star.on { color: #f5b301; }
+.rv-area, .rv-select { width: 100%; box-sizing: border-box; border: 1px solid var(--border-soft); border-radius: 10px; padding: 11px 12px; font: inherit; font-size: 14px; color: var(--text); background: var(--card); resize: vertical; }
+.rv-area:focus, .rv-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.rv-select { margin-top: 10px; cursor: pointer; }
+.rv-form .err-text { min-height: 16px; }
+.rv-form .btn-primary { margin-top: 4px; }
+
+.rv-login { background: var(--bg-alt); border: 1px dashed var(--border-soft); border-radius: 14px; padding: 18px; text-align: center; margin-bottom: 22px; }
+.rv-login p { margin: 0 0 10px; }
+
+/* Rejilla de tarjetas */
+.rv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.rv-empty { color: var(--muted); font-size: 14px; margin: 8px 0 0; }
+
+.rv-card { position: relative; background: var(--card); border: 1px solid var(--border-soft); border-radius: 16px; padding: 22px 20px 18px; box-shadow: 0 6px 18px rgba(16,32,59,.06); display: flex; flex-direction: column; overflow: hidden; }
+.rv-quote { position: absolute; top: 6px; right: 14px; font-size: 56px; line-height: 1; font-family: Georgia, 'Times New Roman', serif; color: var(--accent); opacity: .16; pointer-events: none; }
+.rv-text { margin: 0 0 14px; font-size: 14px; line-height: 1.6; color: var(--text); word-break: break-word; }
+.rv-card .rv-stars { margin-bottom: 14px; }
+.rv-div { border: 0; border-top: 1px solid var(--border-soft); margin: 0 0 12px; }
+.rv-foot { display: flex; flex-direction: column; gap: 2px; }
+.rv-name { font-size: 14px; font-weight: 800; color: var(--text); }
+.rv-meta { font-size: 12px; color: var(--muted); }
+.rv-meta i { font-style: normal; color: var(--accent); font-weight: 600; }
+
+.rv-acts { position: absolute; top: 12px; left: 14px; display: flex; gap: 6px; }
+.rv-act { width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border-soft); border-radius: 8px; background: var(--card); color: var(--muted); cursor: pointer; transition: all .12s; }
+.rv-act svg { width: 15px; height: 15px; }
+.rv-act:hover { color: var(--accent); border-color: var(--accent); }
+.rv-act-del:hover { color: var(--err); border-color: var(--err); }
+
+@media (max-width: 560px) {
+  .rv-grid { grid-template-columns: 1fr; }
+  .rv-headline { align-items: flex-start; }
+  .rv-form-row { align-items: flex-start; flex-direction: column; gap: 6px; }
+}
+
+/* ============================================================
+   Cotizador — portón de inicio de sesión obligatorio
+   ============================================================ */
+.quote-gate { grid-column: 1 / -1; text-align: center; max-width: 460px; margin: 10px auto; }
+.quote-gate-ic { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); }
+.quote-gate-ic svg { width: 28px; height: 28px; }
+.quote-gate h3 { margin: 0 0 6px; font-size: 20px; font-weight: 800; color: var(--text); }
+.quote-gate p { margin: 0 0 16px; }
+@media (max-width: 560px) {
+  .quote-gate { padding: 22px 18px; }
+}

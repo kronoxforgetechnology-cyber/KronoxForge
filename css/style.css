@@ -382,6 +382,33 @@ input[type=range].solo::-moz-range-thumb {
 .toggle-group button.active { background: var(--accent-soft); color: var(--accent); }
 .toggle-group button:hover:not(.active) { background: var(--surface); color: var(--text); }
 
+/* Carrusel de marcas (lista paginada con flechas) */
+.brand-carousel {
+  display: flex; align-items: center; gap: 8px; margin-top: 2px;
+}
+.brand-viewport {
+  flex: 1 1 auto; min-width: 0; min-height: 64px;
+  display: flex; align-items: center;
+}
+.brand-viewport .chips { width: 100%; }
+.brand-nav {
+  flex: 0 0 auto; width: 30px; height: 30px; display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: 50%; background: transparent;
+  color: var(--text); font-size: 13px; line-height: 1; cursor: pointer;
+  transition: all var(--t); user-select: none;
+}
+.brand-nav:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.brand-nav:disabled { opacity: .35; cursor: not-allowed; }
+.brand-dots {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 10px;
+}
+.brand-dot {
+  width: 7px; height: 7px; padding: 0; border: none; border-radius: 50%;
+  background: var(--border); cursor: pointer; transition: all var(--t);
+}
+.brand-dot:hover { background: var(--hover-border); }
+.brand-dot.active { background: var(--accent); transform: scale(1.25); }
+
 /* Chips multiselect */
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip {
@@ -413,23 +440,38 @@ input[type=range].solo::-moz-range-thumb {
   background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 500;
   cursor: pointer; transition: all var(--t); white-space: nowrap;
 }
-/* Hover consistente: NUNCA se vuelve blanco; queda un tinte azul legible */
-.btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.btn:hover svg { color: var(--accent); }
+/* Hover consistente: NUNCA se vuelve blanco; queda un tinte azul legible.
+   El hover se limita a dispositivos con puntero real (@media hover) para que
+   en moviles/tactiles el boton NO quede "pegado" en estado hover (viendose
+   blanco/claro) despues de tocarlo. */
+@media (hover: hover) {
+  .btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .btn:hover svg { color: var(--accent); }
+  /* El primario conserva SIEMPRE su degradado al pasar el cursor */
+  .btn-primary:hover { background-image: var(--grad); background-color: transparent; background-size: 140% 140%; background-position: 100% 0; border-color: transparent; color: #fff; filter: brightness(1.05); }
+  .btn-primary:hover svg { color: #fff; }
+  .btn-ghost:hover { background: var(--surface); color: var(--text); border-color: var(--border); }
+  .btn-ok:hover { background: #15803D; border-color: transparent; color: #fff; filter: brightness(1.03); }
+  .btn-ok:hover svg { color: #fff; }
+  .btn-danger:hover { background: #B91C1C; border-color: transparent; color: #fff; filter: brightness(1.03); }
+  .btn-danger:hover svg { color: #fff; }
+  .btn-clear:hover { background: var(--err-soft); border-color: var(--err); color: var(--err); }
+  .btn-clear:hover svg { color: var(--err); }
+}
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+/* Al hacer clic (focus/active) el boton mantiene su aspecto, nunca se queda blanco */
+.btn:focus { outline: none; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .btn-primary { background: var(--grad); background-size: 140% 140%; border-color: transparent; color: #fff; }
-.btn-primary:hover { background-position: 100% 0; border-color: transparent; filter: brightness(1.05); }
+.btn-primary:focus, .btn-primary:active { background-image: var(--grad); background-color: transparent; background-size: 140% 140%; border-color: transparent; color: #fff; }
+.btn-primary:focus svg, .btn-primary:active svg { color: #fff; }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
-.btn-ghost:hover { background: var(--surface); color: var(--text); border-color: var(--border); }
 .btn-ok { background: var(--ok); border-color: transparent; color: #fff; }
-.btn-ok:hover { background: #15803D; border-color: transparent; color: #fff; filter: brightness(1.03); }
+.btn-ok:focus, .btn-ok:active { background: var(--ok); border-color: transparent; color: #fff; }
 .btn-danger { background: var(--err); border-color: transparent; color: #fff; }
-.btn-danger:hover { background: #B91C1C; border-color: transparent; color: #fff; filter: brightness(1.03); }
+.btn-danger:focus, .btn-danger:active { background: var(--err); border-color: transparent; color: #fff; }
 .btn-clear { color: var(--err); }
-.btn-clear:hover { background: var(--err-soft); border-color: var(--err); color: var(--err); }
-.btn-clear:hover svg { color: var(--err); }
-.btn-clear:hover { background: var(--err-soft); border-color: var(--err); color: var(--err); }
 .btn-sm { padding: 6px 11px; font-size: 12px; }
 .btn-block { width: 100%; }
 .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }

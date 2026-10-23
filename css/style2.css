@@ -1166,3 +1166,48 @@ body[data-page="inicio"] .tile:hover .tile-img img { transform: scale(1.05); }
 @media (max-width: 560px) {
   .quote-gate { padding: 22px 18px; }
 }
+
+/* ============================================================
+   RECOMENDADOR — estilo propio para movil / tablet
+   (el layout de escritorio de 2 columnas se rompia en pantallas
+   pequenas porque el grid-2 trae grid-template-columns en linea;
+   aqui se fuerza una sola columna y se adaptan pestanas y tarjetas)
+   ============================================================ */
+@media (max-width: 820px) {
+  /* El formulario y los resultados se apilan en una sola columna */
+  [data-page="recomendador"] .grid-2 {
+    display: block !important;
+    grid-template-columns: 1fr !important;
+  }
+  [data-page="recomendador"] #viewPerfil .grid-2 > div { margin-bottom: 16px; }
+  [data-page="recomendador"] #viewPerfil .grid-2 > div:last-child { margin-bottom: 0; }
+
+  /* Pestanas a todo el ancho y que puedan partirse en dos lineas */
+  [data-page="recomendador"] .tabs {
+    max-width: 100% !important;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  [data-page="recomendador"] .tabs .tab { flex: 1 1 auto; text-align: center; }
+
+  /* Menos relleno en las tarjetas para aprovechar el ancho */
+  [data-page="recomendador"] .card-pad-lg { padding: 16px; }
+
+  /* El panel con scroll de resultados no debe ocupar toda la pantalla */
+  [data-page="recomendador"] .rec-scroll { max-height: none; padding: 4px; }
+  [data-page="recomendador"] .rec-grid3 { padding: 10px; gap: 14px 12px; }
+
+  /* El verificador de upgrade tambien a ancho completo */
+  [data-page="recomendador"] #viewUpgrade .card[style*="max-width"] { max-width: 100% !important; }
+}
+
+@media (max-width: 520px) {
+  /* En movil: todo en una columna, tarjetas de resultado mas grandes */
+  [data-page="recomendador"] .rec-grid3,
+  [data-page="recomendador"] .rec-grid3-perfil {
+    grid-template-columns: 1fr !important;
+  }
+  [data-page="recomendador"] .rc3-img { height: 150px; }
+  [data-page="recomendador"] .rc3-name { font-size: 14px; -webkit-line-clamp: 3; }
+  [data-page="recomendador"] .tabs .tab { font-size: 13px; padding: 10px 8px; }
+}

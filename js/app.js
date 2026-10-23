@@ -23,6 +23,38 @@ const Store = {
 };
 
 /* ------------------------------------------------------------
+   0b. Supabase — reseñas globales (compartidas entre visitantes)
+   La clave anon es segura en el navegador cuando la tabla tiene
+   Row Level Security activado con políticas adecuadas.
+   ------------------------------------------------------------ */
+const SUPABASE_URL = 'https://esgygfqeqdzvrfhwjpmw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzZ3lnZnFlcWR6dnJmaHdqcG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NzEyODgsImV4cCI6MjEwODM0NzI4OH0.DrylAMMwZttQtWTHNpUTkGnCtp0-BOdMbVSgI7GFMYY';
+const SB_TABLE = 'resenas';
+const sbReady = () => /^https:\/\/[a-z0-9]+\.supabase\.co$/i.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 40;
+const sbHeaders = (extra = {}) => ({ apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY, 'Content-Type': 'application/json', ...extra });
+const SB = {
+  async list() {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${SB_TABLE}?select=*&order=created_at.desc&limit=200`, { headers: sbHeaders() });
+    if (!r.ok) throw new Error('select ' + r.status);
+    return r.json();
+  },
+  async insert(row) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${SB_TABLE}`, { method: 'POST', headers: sbHeaders({ Prefer: 'return=representation' }), body: JSON.stringify(row) });
+    if (!r.ok) throw new Error('insert ' + r.status);
+    return (await r.json())[0];
+  },
+  async update(id, patch) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${SB_TABLE}?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: sbHeaders({ Prefer: 'return=representation' }), body: JSON.stringify(patch) });
+    if (!r.ok) throw new Error('update ' + r.status);
+    return r.json();
+  },
+  async remove(id) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/${SB_TABLE}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', headers: sbHeaders() });
+    if (!r.ok) throw new Error('delete ' + r.status);
+  }
+};
+
+/* ------------------------------------------------------------
    1. Iconos (SVG inline, trazo fino)
    ------------------------------------------------------------ */
 const ico = d => `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -2009,6 +2041,40 @@ function renderQuote() {
   const q = State.quote;
   const tbody = $('#quoteBody'), emptyEl = $('#quoteEmpty'), panel = $('#quotePanel');
   if (!tbody) return;
+
+  /* El cotizador exige iniciar sesion antes de usarlo. */
+  const layout = $('.quote-layout');
+  if (!State.session) {
+    if (layout) {
+      layout.innerHTML = `
+        <div class="quote-gate card card-pad-lg">
+          <span class="quote-gate-ic">${ICONS.user}</span>
+          <h3>Inicia sesión para usar el cotizador</h3>
+          <p class="tiny muted">Necesitas una cuenta para armar tu cotización, aplicar códigos de promoción y comprar de forma segura.</p>
+          <button class="btn btn-primary" id="quoteLogin">Iniciar sesión</button>
+        </div>`;
+      $('#quoteLogin', layout)?.addEventListener('click', () => authModal('login'));
+    }
+    renderNav();
+    return;
+  }
+  if (layout && !$('#quoteTable', layout)) {
+    /* Restaura la estructura original tras iniciar sesion. */
+    layout.innerHTML = `
+      <div class="quote-list-wrap">
+        <div class="empty hidden" id="quoteEmpty">
+          <h3>Tu cotización está vacía</h3>
+          <p class="tiny">Explora el catálogo o arma un equipo completo en el verificador de compatibilidad.</p>
+          <div class="btn-group" style="justify-content:center;margin-top:12px">
+            <a class="btn btn-sm btn-primary" href="catalogo.html">Ir al catálogo</a>
+            <a class="btn btn-sm" href="recomendador.html">Buscar por perfil de uso</a>
+          </div>
+        </div>
+        <div class="q-cards hidden" id="quoteTable"><div id="quoteBody"></div></div>
+      </div>
+      <aside class="card" id="quotePanel"></aside>`;
+    return renderQuote();
+  }
   const items = q.items.map(i => ({ ...i, p: byId(i.id) })).filter(i => i.p);
   q.items = items.map(i => ({ id: i.id, qty: i.qty }));
 
@@ -3237,91 +3303,183 @@ function renderAccount() {
 }
 
 /* ------------------------------------------------------------
-   12b. Pagina: nosotros.html — Comentarios
-   Solo usuarios con sesion iniciada pueden comentar.
-   Cada usuario puede editar o eliminar unicamente sus comentarios.
+   12b. Pagina: nosotros.html — Reseñas globales (Supabase)
+   Solo usuarios con sesion iniciada pueden dejar reseña.
+   Cada usuario puede editar o eliminar unicamente las suyas.
+   Las reseñas se guardan en Supabase y se ven para todos.
    ------------------------------------------------------------ */
+const RV = { list: [], loaded: false, offline: false, rating: 0 };
+const RV_MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+function rvDateLabel(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  if (isNaN(d)) return '';
+  return `${RV_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+function rvStarsHTML(n) {
+  n = clamp(Math.round(Number(n) || 0), 0, 5);
+  let h = '';
+  for (let i = 1; i <= 5; i++) h += `<span class="rv-star${i <= n ? ' on' : ''}">\u2605</span>`;
+  return `<div class="rv-stars" aria-label="${n} de 5 estrellas">${h}</div>`;
+}
+function rvProductOptions(sel) {
+  const opts = PRODUCTS.slice().sort((a, b) => a.name.localeCompare(b.name))
+    .map(p => `<option value="${esc(p.name)}"${sel === p.name ? ' selected' : ''}>${esc(p.name)}</option>`).join('');
+  return `<option value="">(Opcional) Producto que recomiendas…</option>${opts}`;
+}
+
 function renderComments() {
   const host = $('#commentsSection'); if (!host) return;
   const s = State.session;
-  const list = Store.get('comments', []);
-  const items = list.map(c => {
-    const mine = s && c.email === s.email;
-    const initial = esc((c.name || 'U').trim().charAt(0).toUpperCase() || 'U');
-    return `<div class="cmt" data-cmt="${esc(c.id)}">
-      <div class="cmt-head">
-        <span class="cmt-ava">${initial}</span>
-        <div class="cmt-meta"><b>${esc(c.name || 'Usuario')}</b><span class="tiny muted">${esc(c.date)}${c.edited ? ' · editado' : ''}</span></div>
-        ${mine ? `<span class="cmt-acts">
-          <button class="btn btn-sm" data-edit="${esc(c.id)}">${ICONS.edit} Editar</button>
-          <button class="btn btn-sm btn-clear" data-del="${esc(c.id)}">${ICONS.trash}</button>
-        </span>` : ''}
+  const avg = RV.list.length ? (RV.list.reduce((n, c) => n + (Number(c.rating) || 0), 0) / RV.list.length) : 0;
+
+  const cards = RV.list.map(c => {
+    const mine = s && c.email && c.email === s.email;
+    const prod = (c.product || '').trim();
+    return `<article class="rv-card" data-cmt="${esc(c.id)}">
+      <span class="rv-quote" aria-hidden="true">\u201D</span>
+      ${mine ? `<span class="rv-acts">
+        <button class="rv-act" data-edit="${esc(c.id)}" title="Editar" aria-label="Editar">${ICONS.edit}</button>
+        <button class="rv-act rv-act-del" data-del="${esc(c.id)}" title="Eliminar" aria-label="Eliminar">${ICONS.trash}</button>
+      </span>` : ''}
+      <p class="rv-text">${esc(c.text)}</p>
+      ${rvStarsHTML(c.rating)}
+      <hr class="rv-div">
+      <div class="rv-foot">
+        <b class="rv-name">${esc(c.name || 'Usuario')}</b>
+        <span class="rv-meta">${esc(rvDateLabel(c.created_at || c.date))}${c.edited ? ' · editado' : ''}${prod ? ` · recomendó: <i>${esc(prod)}</i>` : ''}</span>
       </div>
-      <p class="cmt-text">${esc(c.text)}</p>
-    </div>`;
+    </article>`;
   }).join('');
 
+  const listBlock = !RV.loaded
+    ? '<p class="rv-empty">Cargando reseñas…</p>'
+    : (cards ? `<div class="rv-grid">${cards}</div>` : '<p class="rv-empty">Aún no hay reseñas. ¡Sé el primero en dejar la tuya!</p>');
+
   host.innerHTML = `
-    <h3 style="margin:0 0 4px">Comentarios</h3>
-    <p class="tiny muted" style="margin:0 0 16px">Cuéntanos tu experiencia con Kronox Forge.</p>
+    <div class="rv-headline">
+      <div>
+        <h3>Reseñas de nuestros clientes</h3>
+        <p class="tiny muted">Cuéntanos tu experiencia con Kronox Forge.</p>
+      </div>
+      ${RV.loaded && RV.list.length ? `<div class="rv-avg">${rvStarsHTML(avg)}<span>${avg.toFixed(1)} · ${RV.list.length} reseña${RV.list.length === 1 ? '' : 's'}</span></div>` : ''}
+    </div>
+    ${RV.offline ? '<p class="rv-note">No pudimos conectar con el servidor de reseñas; se muestran las guardadas en este navegador.</p>' : ''}
     ${s ? `
-      <div class="cmt-form">
-        <textarea id="cmtInput" class="cmt-area" rows="3" maxlength="600" placeholder="Escribe un comentario como ${esc(s.name || s.email)}..."></textarea>
+      <div class="rv-form">
+        <div class="rv-form-row">
+          <span class="rv-form-lbl">Tu calificación</span>
+          <div class="rv-rate" id="rvRate" role="radiogroup" aria-label="Calificación">
+            ${[1,2,3,4,5].map(i => `<button type="button" class="rv-rate-star" data-star="${i}" aria-label="${i} estrella${i===1?'':'s'}">\u2605</button>`).join('')}
+          </div>
+        </div>
+        <textarea id="cmtInput" class="rv-area" rows="3" maxlength="600" placeholder="Escribe tu reseña como ${esc(s.name || s.email)}…"></textarea>
+        <select id="rvProduct" class="rv-select">${rvProductOptions('')}</select>
         <div class="err-text" id="cmtErr"></div>
-        <button class="btn btn-primary" id="cmtSend">Publicar comentario</button>
+        <button class="btn btn-primary" id="cmtSend">Publicar reseña</button>
       </div>` : `
-      <div class="cmt-login">
-        <p class="tiny muted" style="margin:0 0 8px">Debes iniciar sesión para dejar un comentario.</p>
+      <div class="rv-login">
+        <p class="tiny muted">Debes iniciar sesión para dejar una reseña.</p>
         <button class="btn btn-primary btn-sm" id="cmtLogin">Iniciar sesión</button>
       </div>`}
-    <div class="cmt-list">${items || '<p class="tiny muted" style="margin-top:16px">Aún no hay comentarios. ¡Sé el primero!</p>'}</div>`;
+    ${listBlock}`;
 
+  RV.rating = 0;
   $('#cmtLogin', host)?.addEventListener('click', () => authModal('login'));
-  $('#cmtSend', host)?.addEventListener('click', () => {
-    if (!State.session) return authModal('login');
-    const inp = $('#cmtInput', host), err = $('#cmtErr', host);
-    const text = (inp.value || '').trim();
-    if (text.length < 2) { err.textContent = 'Escribe un comentario válido.'; return; }
-    const arr = Store.get('comments', []);
-    arr.unshift({ id: uid('cmt'), email: s.email, name: s.name || s.email, text, date: new Date().toISOString().slice(0, 10), edited: false });
-    Store.set('comments', arr.slice(0, 200));
-    toast('Comentario publicado', 'ok');
-    renderComments();
-  });
-  $$('[data-del]', host).forEach(b => b.addEventListener('click', () => {
-    if (!State.session) return;
-    let arr = Store.get('comments', []);
-    arr = arr.filter(c => !(c.id === b.dataset.del && c.email === State.session.email));
-    Store.set('comments', arr);
-    toast('Comentario eliminado');
-    renderComments();
+  $$('.rv-rate-star', host).forEach(b => b.addEventListener('click', () => {
+    RV.rating = +b.dataset.star;
+    $$('.rv-rate-star', host).forEach(x => x.classList.toggle('on', +x.dataset.star <= RV.rating));
   }));
+  $('#cmtSend', host)?.addEventListener('click', rvSend);
+  $$('[data-del]', host).forEach(b => b.addEventListener('click', () => rvDelete(b.dataset.del)));
   $$('[data-edit]', host).forEach(b => b.addEventListener('click', () => startEditComment(b.dataset.edit)));
+
+  if (!RV.loaded) rvLoad();
+}
+
+async function rvLoad() {
+  try {
+    if (!sbReady()) throw new Error('config');
+    const rows = await SB.list();
+    RV.list = Array.isArray(rows) ? rows : [];
+    RV.offline = false;
+    Store.set('comments', RV.list.slice(0, 200));
+  } catch (e) {
+    RV.list = Store.get('comments', []);
+    RV.offline = true;
+  }
+  RV.loaded = true;
+  renderComments();
+}
+
+async function rvSend() {
+  const s = State.session; if (!s) return authModal('login');
+  const host = $('#commentsSection'); if (!host) return;
+  const inp = $('#cmtInput', host), err = $('#cmtErr', host);
+  const text = (inp.value || '').trim();
+  const product = ($('#rvProduct', host)?.value || '').trim();
+  if (!RV.rating) { err.textContent = 'Selecciona una calificación con las estrellas.'; return; }
+  if (text.length < 2) { err.textContent = 'Escribe una reseña válida.'; return; }
+  const btn = $('#cmtSend', host); if (btn) { btn.disabled = true; btn.textContent = 'Publicando…'; }
+  const row = { email: s.email, name: s.name || s.email, text, rating: RV.rating, product, edited: false };
+  try {
+    if (!sbReady()) throw new Error('config');
+    const saved = await SB.insert(row);
+    RV.list.unshift(saved);
+  } catch (e) {
+    RV.offline = true;
+    RV.list.unshift({ ...row, id: uid('cmt'), created_at: new Date().toISOString() });
+  }
+  Store.set('comments', RV.list.slice(0, 200));
+  toast('Reseña publicada', 'ok');
+  renderComments();
+}
+
+async function rvDelete(id) {
+  const s = State.session; if (!s) return;
+  const c = RV.list.find(x => String(x.id) === String(id));
+  if (!c || c.email !== s.email) return;
+  try { if (sbReady() && !RV.offline) await SB.remove(id); } catch (e) {}
+  RV.list = RV.list.filter(x => String(x.id) !== String(id));
+  Store.set('comments', RV.list.slice(0, 200));
+  toast('Reseña eliminada');
+  renderComments();
 }
 
 function startEditComment(id) {
   const host = $('#commentsSection'); const s = State.session; if (!host || !s) return;
-  const arr = Store.get('comments', []);
-  const c = arr.find(x => x.id === id && x.email === s.email); if (!c) return;
+  const c = RV.list.find(x => String(x.id) === String(id) && x.email === s.email); if (!c) return;
   const node = $(`[data-cmt="${id}"]`, host); if (!node) return;
   node.innerHTML = `
-    <textarea class="cmt-area" id="cmtEditArea" rows="3" maxlength="600">${esc(c.text)}</textarea>
-    <div class="btn-group" style="margin-top:8px">
+    <div class="rv-rate" id="rvEditRate" role="radiogroup" aria-label="Calificación">
+      ${[1,2,3,4,5].map(i => `<button type="button" class="rv-rate-star${i <= (c.rating || 0) ? ' on' : ''}" data-star="${i}">\u2605</button>`).join('')}
+    </div>
+    <textarea class="rv-area" id="cmtEditArea" rows="3" maxlength="600">${esc(c.text)}</textarea>
+    <select id="rvEditProduct" class="rv-select">${rvProductOptions(c.product || '')}</select>
+    <div class="btn-group" style="margin-top:8px;gap:8px">
       <button class="btn btn-primary btn-sm" id="cmtSaveEdit">Guardar cambios</button>
       <button class="btn btn-sm" id="cmtCancelEdit">Cancelar</button>
     </div>`;
-  $('#cmtSaveEdit', node).addEventListener('click', () => {
+  let rating = c.rating || 0;
+  $$('.rv-rate-star', node).forEach(b => b.addEventListener('click', () => {
+    rating = +b.dataset.star;
+    $$('.rv-rate-star', node).forEach(x => x.classList.toggle('on', +x.dataset.star <= rating));
+  }));
+  $('#cmtSaveEdit', node).addEventListener('click', async () => {
     const t = ($('#cmtEditArea', node).value || '').trim();
-    if (t.length < 2) { toast('El comentario no puede quedar vacío', 'err'); return; }
-    const a2 = Store.get('comments', []);
-    const target = a2.find(x => x.id === id && x.email === s.email);
-    if (target) { target.text = t; target.edited = true; Store.set('comments', a2); }
-    toast('Comentario actualizado', 'ok'); renderComments();
+    const product = ($('#rvEditProduct', node)?.value || '').trim();
+    if (t.length < 2) { toast('La reseña no puede quedar vacía', 'err'); return; }
+    if (!rating) { toast('Selecciona una calificación', 'err'); return; }
+    const patch = { text: t, rating, product, edited: true };
+    try { if (sbReady() && !RV.offline) await SB.update(id, patch); } catch (e) {}
+    Object.assign(c, patch);
+    Store.set('comments', RV.list.slice(0, 200));
+    toast('Reseña actualizada', 'ok'); renderComments();
   });
   $('#cmtCancelEdit', node).addEventListener('click', renderComments);
 }
 
 function initNosotros() {
+  RV.loaded = false;
   renderComments();
   document.addEventListener('kf:auth', renderComments);
 }

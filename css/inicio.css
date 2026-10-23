@@ -1,0 +1,187 @@
+/* ============================================================
+   KRONOX FORGE — Pagina de Inicio (index)
+   Hoja complementaria que da mas aire, jerarquia y pulido a la
+   portada, en linea con el diseno de la pagina "Nosotros".
+   Tema claro, acento azul (#2563EB). Importar DESPUES de
+   style.css y style2.css.
+   ============================================================ */
+
+.home-wrap { padding-top: 6px; }
+
+/* ---------- Ritmo general entre secciones ---------- */
+.home-section { margin: 0 0 84px; }
+.home-section:last-of-type { margin-bottom: 40px; }
+
+/* ============================================================
+   HERO principal — panel con degradado oscuro y mucho aire
+   ============================================================ */
+.hero-home {
+  position: relative;
+  padding: 56px 52px;
+  margin-bottom: 76px;
+  border-radius: 26px;
+  overflow: hidden;
+  color: #eef3ff;
+  background:
+    radial-gradient(1100px 420px at 88% -10%, rgba(37,99,235,.22), transparent 60%),
+    linear-gradient(135deg, #0E1626 0%, #16213C 46%, #1E3A8A 100%);
+  box-shadow: 0 24px 60px rgba(16,32,59,.22);
+}
+.hero-home::after {
+  content: ""; position: absolute; right: -120px; bottom: -150px;
+  width: 380px; height: 380px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(79,134,247,.32), transparent 70%);
+  pointer-events: none;
+}
+.hero-home-grid {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1.15fr .85fr;
+  gap: 52px; align-items: center;
+}
+.hero-home .home-eyebrow {
+  margin-bottom: 18px; display: inline-block;
+  background: rgba(120,165,255,.18); color: #bcd2ff;
+  border: 1px solid rgba(120,165,255,.35);
+}
+.hero-home-title {
+  font-size: clamp(30px, 4vw, 46px);
+  line-height: 1.08; font-weight: 800; letter-spacing: -.02em;
+  margin: 0 0 18px; color: #fff; max-width: 15ch;
+}
+.hero-home .accent-text {
+  background: linear-gradient(100deg, #7fb0ff, #4F86F7);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.hero-home-lead {
+  font-size: 15.5px; line-height: 1.75; margin: 0 0 24px;
+  color: #c5d2ec; max-width: 560px;
+}
+.hero-home .btn-group { margin-bottom: 4px; }
+
+/* Botones del hero oscuro: el secundario se lee claro sobre el fondo */
+.hero-home .btn:not(.btn-primary) {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.28);
+  color: #eef3ff;
+}
+@media (hover: hover) {
+  .hero-home .btn:not(.btn-primary):hover {
+    background: rgba(255,255,255,.16);
+    border-color: rgba(255,255,255,.5);
+    color: #fff;
+  }
+}
+
+/* Estadisticas del hero */
+.hero-home-stats {
+  display: flex; gap: 40px; flex-wrap: wrap;
+  margin-top: 28px; padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,.14);
+}
+.hero-home-stat { display: flex; flex-direction: column; }
+.hero-home-stat b { font-size: 26px; color: #fff; font-weight: 800; line-height: 1; }
+.hero-home-stat span { font-size: 12.5px; color: #a9b8d8; margin-top: 7px; }
+
+/* Carrusel del hero: mas alto y con sombra marcada */
+.hero-home .hero-carousel {
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  box-shadow: 0 24px 50px rgba(0,0,0,.4);
+  aspect-ratio: 4 / 3;
+}
+
+/* ============================================================
+   Encabezados de seccion reutilizables
+   ============================================================ */
+.home-eyebrow-sm {
+  display: inline-block;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
+}
+.home-h2 {
+  font-size: clamp(23px, 2.8vw, 31px); font-weight: 800;
+  letter-spacing: -.02em; margin: 0; color: var(--text);
+}
+.home-sub {
+  margin: 10px 0 0; font-size: 15px; line-height: 1.7; color: var(--muted);
+}
+.home-head { margin-bottom: 30px; }
+.home-head-center { text-align: center; max-width: 620px; margin-left: auto; margin-right: auto; }
+.home-head-center .home-sub { max-width: 540px; margin-left: auto; margin-right: auto; }
+.home-head-row {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+}
+.home-head-row .home-sub { margin-top: 6px; }
+.home-head-row .btn { flex: none; }
+
+/* ============================================================
+   Tarjeta editorial (guia de compra) — mas presencia
+   ============================================================ */
+.home-editorial {
+  border-radius: 22px; overflow: hidden;
+  box-shadow: 0 16px 42px rgba(16,32,59,.10);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.home-editorial:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 54px rgba(16,32,59,.15);
+}
+.home-editorial .editorial-tx { padding: 40px 44px; }
+.home-editorial .editorial-tx h2 { font-size: clamp(22px, 2.4vw, 27px); margin-bottom: 14px; }
+.home-editorial .editorial-tx p { font-size: 14.5px; line-height: 1.7; margin-bottom: 14px; }
+.home-editorial .editorial-img { min-height: 340px; }
+
+/* ============================================================
+   Tarjetas "Que puedes hacer aqui" — un poco mas de aire
+   ============================================================ */
+.home-section .tiles { gap: 20px; }
+.home-section .tile-tx { padding: 18px 18px 22px; }
+.home-section .tile-tx h3 { font-size: 15.5px; margin: 0 0 6px; }
+.home-section .tile-tx p { font-size: 12.5px; line-height: 1.55; }
+
+/* ============================================================
+   Llamado final (CTA) — panel suave centrado
+   ============================================================ */
+.home-cta {
+  text-align: center;
+  padding: 52px 40px;
+  border-radius: 24px;
+  background:
+    radial-gradient(900px 300px at 50% -40%, rgba(37,99,235,.10), transparent 60%),
+    linear-gradient(160deg, var(--surface), var(--bg-alt));
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-card);
+}
+.home-cta h3 {
+  font-size: clamp(22px, 2.6vw, 28px); font-weight: 800;
+  letter-spacing: -.02em; margin: 0 0 10px; color: var(--text);
+}
+.home-cta p {
+  max-width: 560px; margin: 0 auto 22px;
+  font-size: 15px; line-height: 1.7; color: var(--muted);
+}
+
+/* Separacion extra bajo el carrusel de destacadas */
+.home-section .feat-carousel { margin-top: 4px; }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 980px) {
+  .hero-home { padding: 42px 30px; margin-bottom: 60px; }
+  .hero-home-grid { grid-template-columns: 1fr; gap: 34px; }
+  .hero-home .hero-carousel { order: -1; aspect-ratio: 16 / 10; }
+  .hero-home-title { max-width: none; }
+  .home-section { margin-bottom: 64px; }
+  .home-editorial .editorial-tx { padding: 30px 26px; }
+  .home-editorial .editorial-img { min-height: 220px; }
+}
+@media (max-width: 560px) {
+  .hero-home { padding: 32px 22px; border-radius: 20px; }
+  .hero-home-stats { gap: 24px; }
+  .home-cta { padding: 38px 22px; }
+  .home-head-row { align-items: flex-start; }
+}

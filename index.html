@@ -10,32 +10,41 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/style2.css">
+<link rel="stylesheet" href="css/inicio.css">
 </head>
 <body data-page="inicio">
 
 <div id="navbar"></div>
 
 <main class="main">
-  <div class="wrap">
+  <div class="wrap home-wrap">
 
-    <section class="hero hero-split reveal">
-      <div class="hero-tx">
-        <span class="badge badge-accent" style="margin-bottom:12px">Computadoras y componentes verificados</span>
-        <h1>Encuentra tu proxima computadora y armala sin sorpresas</h1>
-        <p>Kronox Forge es la tienda donde eliges laptops y componentes con seguridad: comprobamos la compatibilidad (socket, memoria, potencia y espacio) antes de pagar, mostramos precios con IVA y te ayudamos a decidir segun tu uso y presupuesto.</p>
-        <div class="btn-group">
-          <a class="btn btn-primary" href="catalogo.html?cat=laptops">Ver computadoras</a>
-          <a class="btn" href="compatibilidad.html">Armar mi PC</a>
+    <section class="hero-home reveal">
+      <div class="hero-home-grid">
+        <div class="hero-tx">
+          <span class="badge badge-accent home-eyebrow">Computadoras y componentes verificados</span>
+          <h1 class="hero-home-title">Encuentra tu proxima computadora y <span class="accent-text">armala sin sorpresas</span></h1>
+          <p class="hero-home-lead">Kronox Forge es la tienda donde eliges laptops y componentes con seguridad: comprobamos la compatibilidad (socket, memoria, potencia y espacio) antes de pagar, mostramos precios con IVA y te ayudamos a decidir segun tu uso y presupuesto.</p>
+          <div class="btn-group">
+            <a class="btn btn-primary" href="catalogo.html?cat=laptops">Ver computadoras</a>
+            <a class="btn" href="compatibilidad.html">Armar mi PC</a>
+          </div>
+          <div class="hero-home-stats">
+            <div class="hero-home-stat"><b>+180</b><span>Productos</span></div>
+            <div class="hero-home-stat"><b>100%</b><span>Compatibilidad verificada</span></div>
+            <div class="hero-home-stat"><b>IVA 13%</b><span>Precios transparentes</span></div>
+          </div>
         </div>
+        <div class="hero-carousel" id="heroCarousel" aria-label="Imagenes de Kronox Forge"></div>
       </div>
-      <div class="hero-carousel" id="heroCarousel" aria-label="Imagenes de Kronox Forge"></div>
     </section>
 
-    <section class="reveal" style="margin-bottom:48px">
-      <div class="sec-head">
+    <section class="home-section reveal">
+      <div class="home-head home-head-row">
         <div>
-          <h2>Computadoras destacadas</h2>
-          <p>Una seleccion de laptops listas para trabajar, estudiar o jugar.</p>
+          <span class="home-eyebrow-sm">Catalogo destacado</span>
+          <h2 class="home-h2">Computadoras destacadas</h2>
+          <p class="home-sub">Una seleccion de laptops listas para trabajar, estudiar o jugar.</p>
         </div>
         <a class="btn btn-sm" href="catalogo.html?cat=laptops">Ver todas</a>
       </div>
@@ -47,8 +56,8 @@
       </div>
     </section>
 
-    <section class="reveal" style="margin-bottom:48px">
-      <article class="card editorial">
+    <section class="home-section reveal">
+      <article class="card editorial home-editorial">
         <div class="editorial-tx">
           <span class="eyebrow">Guia de compra</span>
           <h2>Como elegir la computadora correcta para ti</h2>
@@ -63,8 +72,12 @@
       </article>
     </section>
 
-    <section class="reveal" style="margin-bottom:48px">
-      <h4 class="section-title" style="text-align:center">Que puedes hacer aqui</h4>
+    <section class="home-section reveal">
+      <div class="home-head home-head-center">
+        <span class="home-eyebrow-sm">Todo en un solo lugar</span>
+        <h2 class="home-h2">Que puedes hacer aqui</h2>
+        <p class="home-sub">Explora, arma, verifica y cotiza con informacion clara en cada paso.</p>
+      </div>
       <div class="tiles">
         <a class="tile" href="catalogo.html">
           <span class="tile-img"><img src="img/Inicio imagnes/laptops muestras.pmg.jpg" alt="Computadoras de muestra" loading="lazy"></span>
@@ -85,12 +98,14 @@
       </div>
     </section>
 
-    <section class="card card-pad-lg reveal" style="text-align:center">
-      <h3 style="margin:0 0 6px">Listo para elegir tu equipo?</h3>
-      <p class="muted" style="max-width:560px;margin:0 auto 16px">Empieza por las computadoras del catalogo o deja que el recomendador te oriente segun tu presupuesto.</p>
-      <div class="btn-group" style="justify-content:center">
-        <a class="btn btn-primary" href="catalogo.html?cat=laptops">Ver computadoras</a>
-        <a class="btn" href="recomendador.html">Usar el recomendador</a>
+    <section class="home-section reveal">
+      <div class="home-cta">
+        <h3>Listo para elegir tu equipo?</h3>
+        <p>Empieza por las computadoras del catalogo o deja que el recomendador te oriente segun tu presupuesto.</p>
+        <div class="btn-group" style="justify-content:center">
+          <a class="btn btn-primary" href="catalogo.html?cat=laptops">Ver computadoras</a>
+          <a class="btn" href="recomendador.html">Usar el recomendador</a>
+        </div>
       </div>
     </section>
 
@@ -99,6 +114,10 @@
 
 <div id="footer"></div>
 <script src="js/laptops.js"></script>
+<script src="js/laptops2.js"></script>
+<script src="js/laptops3.js"></script>
+<script src="js/laptops4.js"></script>
+<script src="js/componentes.js"></script>
 <script src="js/app.js"></script>
 <script>
   (function () {

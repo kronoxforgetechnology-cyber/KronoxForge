@@ -401,10 +401,11 @@ const CAT_IMG = {
 };
 /* Imágenes por producto (carpeta img/Img/, nombradas igual que el producto) */
 const PROD_IMG_SET = new Set(["AMD Radeon RX 7600 8GB","AMD Ryzen 5 5600","AMD Ryzen 5 7600","AMD Ryzen 7 7700X","AMD Ryzen 9 7900X","APC Back-UPS 600VA","ASUS Prime H610M-K D4","ASUS Prime Z690-P WiFi","ASUS ROG Strix G16 (RTX 4070)","ASUS TUF Gaming X670E-Plus","ASUS VivoBook 15 X1504","Corsair 4000D Airflow","Corsair CX650 80+ Bronze 650W","Corsair RM1000x 80+ Gold 1000W","Corsair RM750e 80+ Gold 750W","Corsair Vengeance 32GB (2x16) DDR5-5600","Corsair Vengeance LPX 16GB (2x8) DDR4-3600","Dell Inspiron 15 3520","Dell Universal Dock D6000","Dell XPS 13 9315","EVGA 500 W1 80+ White 500W","Gigabyte B550 AORUS Elite V2","Gigabyte B760M DS3H DDR4","HP Pavilion 15-eg3000","HP Victus 16 (RTX 4060)","Intel Core i5-12400F","Intel Core i5-13400","Intel Core i7-13700K","Intel Core i9-13900K","Kingston A400 480GB SATA","Kingston Fury Beast 16GB (2x8) DDR4-3200","Kingston Fury Beast 16GB DDR5-5200","Kingston Fury Beast 32GB (2x16) DDR4-3600","Kingston Fury Beast 32GB (2x16) DDR5-6000","Kingston Fury Beast 8GB DDR4-3200","Kingston NV2 1TB PCIe 4.0","LG 24MP400 24 IPS","LG UltraGear 27GP850 27","Lenovo IdeaPad 3 15ALC6","Lenovo ThinkPad E14 Gen 5","Lian Li Lancool 216","Logitech C920 HD Pro Webcam","Logitech G Pro X TKL Lightspeed","Logitech G502 X Lightspeed","Logitech G733 Lightspeed","Logitech MX Keys S","Logitech MX Master 3S","MSI PRO B650M-A WiFi","MSI PRO B660M-A DDR4","NVIDIA GeForce GTX 1050 Ti 4GB","NVIDIA GeForce GTX 1650 4GB","NVIDIA GeForce GTX 1660 Super 6GB","NVIDIA GeForce RTX 3060 12GB","NVIDIA GeForce RTX 4060 8GB","NVIDIA GeForce RTX 4070 12GB","NVIDIA GeForce RTX 4080 16GB","NZXT H5 Flow ATX","Noctua NH-U12S chromax.black","Samsung 970 EVO Plus 1TB NVMe","Samsung 980 500GB NVMe","Samsung 990 PRO 2TB PCIe 4.0","Samsung Odyssey G5 27 QHD","Samsung ViewFinity S7 27 4K","Seagate BarraCuda 2TB 7200RPM","Seasonic Focus GX-850 80+ Gold 850W","Thermaltake Versa H18 mATX","Ubuntu 24.04 LTS (licencia libre)","WD Black SN850X 2TB","Windows 11 Home 64-bit OEM","Windows 11 Pro 64-bit OEM"]);
+const slugName = s => (s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const prodImg = p => {
   if (!p || !p.name) return '';
   const key = p.name.replace(/"/g, '');
-  return PROD_IMG_SET.has(key) ? 'img/Img/' + encodeURIComponent(key) + '.jpg' : '';
+  return PROD_IMG_SET.has(key) ? 'img/Img/' + slugName(key) + '.jpg' : '';
 };
 /* Prefijo de ruta: dentro de /admin/ las imagenes relativas apuntan a ../img/... */
 const IMG_BASE = location.pathname.includes('/admin/') ? '../' : '';
@@ -2567,7 +2568,11 @@ function payModal(cust) {
 
   $('#payFill', m.el).addEventListener('click', () => {
     const c = randomCard();
-    nameI.value = c.name; numI.value = c.num; expI.value = c.exp.replace('/', ' / '); cvvI.value = c.cvv;
+    // Usa el nombre de la cuenta con sesion iniciada en vez de un nombre aleatorio.
+    const acct = State.profile() || State.session || null;
+    const acctName = acct && (acct.name || acct.email) ? String(acct.name || acct.email).trim() : '';
+    nameI.value = (acctName || c.name).toUpperCase();
+    numI.value = c.num; expI.value = c.exp.replace('/', ' / '); cvvI.value = c.cvv;
     setBrand(); sync();
   });
 
@@ -2707,13 +2712,18 @@ function buildReceiptPDF(rec, masked, now) {
   nl(6);
   const wrapLine = (label, text, max) => {
     const t = String(text || '-');
+    const lim = max || 62;
+    // La etiqueta va en su propia linea y el valor queda indentado debajo,
+    // asi la etiqueta larga (p. ej. "Direccion de facturacion:") no se solapa.
     seg.push({ x: 56, y: y, size: 11, bold: false, text: label });
-    if (t.length <= (max || 46)) { seg.push({ x: 160, y: y, size: 11, bold: true, text: t }); nl(18); }
+    nl(16);
+    if (t.length <= lim) { seg.push({ x: 72, y: y, size: 11, bold: true, text: t }); nl(18); }
     else {
       const words = t.split(' '); let cur = ''; const lines = [];
-      words.forEach(w => { if ((cur + ' ' + w).trim().length > (max || 46)) { lines.push(cur.trim()); cur = w; } else cur += ' ' + w; });
+      words.forEach(w => { if ((cur + ' ' + w).trim().length > lim) { lines.push(cur.trim()); cur = w; } else cur += ' ' + w; });
       if (cur.trim()) lines.push(cur.trim());
-      lines.forEach((ln, idx) => { seg.push({ x: 160, y: y, size: 11, bold: true, text: ln }); nl(16); });
+      lines.forEach(ln => { seg.push({ x: 72, y: y, size: 11, bold: true, text: ln }); nl(16); });
+      nl(3);
     }
   };
   wrapLine('Direccion de envio:', formatAddr(rec.shipping));

@@ -69,6 +69,7 @@ const ICONS = {
   eye: ico('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>'),
   googleG: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"/><path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.5 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.8V6.5H1.4a12 12 0 0 0 0 11z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.5l4 3.1C6.3 6.8 8.9 4.8 12 4.8z"/></svg>',
   apple: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.6.7 2.8.7c1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4s-2.2-.9-2.4-3.3zM14.2 5.9c.6-.7 1-1.8.9-2.9-.9 0-2 .6-2.6 1.4-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>',
+  github: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>',
   wallet: ico('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/>'),
   lock: ico('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'),
   shield: ico('<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/>')
@@ -334,10 +335,24 @@ const PRODUCTS = [
 
 /* Catálogo administrable desde el panel admin (carpeta admin/).
    Si el admin guardó cambios en localStorage, se aplican sobre PRODUCTS
-   en memoria (el arreglo es mutable y todo el sitio lo comparte). */
+   en memoria (el arreglo es mutable y todo el sitio lo comparte).
+   IMPORTANTE: se aplica ANTES de integrar los productos adicionales para
+   que los lotes (laptops2/3/4.js) siempre se agreguen aunque exista un
+   catálogo guardado por el admin. */
 (function applyAdminCatalog() {
   const cat = Store.get('admin_catalog', null);
   if (Array.isArray(cat)) { PRODUCTS.length = 0; PRODUCTS.push(...cat); }
+})();
+
+/* Productos adicionales cargados desde archivos aparte (p.ej. js/laptops2.js,
+   laptops3.js, laptops4.js) mediante window.EXTRA_PRODUCTS. Se integran al
+   arreglo PRODUCTS (mutable y compartido) SIEMPRE, incluso después de aplicar
+   el catálogo del admin, agregando por id los que falten. Así el Catálogo y el
+   Recomendador muestran todos los equipos nuevos con sus imágenes. */
+(function mergeExtraProducts() {
+  const extra = window.EXTRA_PRODUCTS;
+  if (!Array.isArray(extra)) return;
+  extra.forEach(p => { if (p && p.id && !PRODUCTS.some(x => x.id === p.id)) PRODUCTS.push(p); });
 })();
 
 const byId = id => PRODUCTS.find(p => p.id === id);
@@ -364,8 +379,25 @@ const IMG_BASE = location.pathname.includes('/admin/') ? '../' : '';
 const withBase = s => (s && !/^(https?:)?\/\//i.test(s) && !s.startsWith('/') && !s.startsWith('data:')) ? IMG_BASE + s : s;
 const catImg = p => withBase(p.img || prodImg(p) || CAT_IMG[p?.category] || '');
 const thumbHTML = (p, cls) => catImg(p)
-  ? `<img class="${cls}" src="${catImg(p)}" alt="" loading="lazy">`
+  ? `<img class="${cls}" src="${catImg(p)}" data-cat="${p && p.category ? p.category : ''}" alt="" loading="lazy">`
   : `<span class="picon" style="width:34px;height:34px">${ICONS[p.icon] || ICONS.box}</span>`;
+
+/* Respaldo global de imagenes: si una foto (local o remota) no carga,
+   se reemplaza por la ilustracion de su categoria para evitar recuadros rotos.
+   Se usa un listener en fase de captura (no se emplean manejadores en linea). */
+(function imageFallback() {
+  const apply = img => {
+    if (!img || img.dataset.fbDone) return;
+    const cat = img.getAttribute('data-cat') || '';
+    const alt = (IMG_BASE || '') + (CAT_IMG[cat] || 'img/laptops.png');
+    img.dataset.fbDone = '1';
+    if (img.getAttribute('src') !== alt) img.src = alt;
+  };
+  document.addEventListener('error', e => {
+    const t = e.target;
+    if (t && t.tagName === 'IMG') apply(t);
+  }, true);
+})();
 
 /* Kits de escritorio preconfigurados para el recomendador */
 const DESKTOP_KITS = [
@@ -448,6 +480,25 @@ const TEST_USER = { email:'admin@kronoxlabs.com', password:'Admin1234', name:'Ad
    ============================================================ */
 const GOOGLE_CLIENT_ID = '77666275658-9qlbm5opre7hp436qioi4hqunregjjqv.apps.googleusercontent.com'; // <-- pega aqui tu ID de cliente de Google
 
+/* ============================================================
+   ACCESO CON GITHUB (OAuth)
+   Importante: a diferencia de Google, GitHub NO permite iniciar sesion
+   100% desde el navegador. Hace falta una pequena funcion en la nube
+   (serverless) que intercambie el "code" por un token, porque ese paso
+   exige el client_secret, que NUNCA debe quedar en el codigo del sitio.
+   Pasos:
+   1) En https://github.com/settings/developers > "OAuth Apps" crea una app.
+        - Homepage URL: la URL publicada (p. ej. https://tuusuario.github.io/KronoxForge/).
+        - Authorization callback URL: la pagina de login publicada con https
+          (p. ej. https://tuusuario.github.io/KronoxForge/cuenta.html).
+   2) Copia el "Client ID" en GITHUB_CLIENT_ID.
+   3) Despliega la funcion de intercambio (codigo listo en la respuesta del chat)
+      en Cloudflare Workers / Vercel / Netlify y pega su URL en GITHUB_PROXY_URL.
+   4) GitHub NO funciona desde file:// : el sitio debe estar publicado en https.
+   ============================================================ */
+const GITHUB_CLIENT_ID = '';  // <-- pega aqui el Client ID de tu OAuth App de GitHub
+const GITHUB_PROXY_URL = '';  // <-- pega aqui la URL de tu funcion que cambia el code por un token
+
 let _gisPromise = null;
 function ensureGis() {
   if (window.google && google.accounts && google.accounts.id) return Promise.resolve();
@@ -484,6 +535,70 @@ function handleGoogleCredential(resp, m) {
   renderNav();
   if (PAGE === 'cuenta') renderAccount();
   document.dispatchEvent(new CustomEvent('kf:auth'));
+}
+function startGithubLogin() {
+  if (!GITHUB_CLIENT_ID || !GITHUB_PROXY_URL) {
+    toast('Para activar el acceso con GitHub, configura GITHUB_CLIENT_ID y GITHUB_PROXY_URL.', 'err');
+    return;
+  }
+  const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  Store.set('gh_state', state);
+  // Volvemos a esta misma pagina; GitHub devuelve ?code=...&state=...
+  const redirect = location.origin + location.pathname;
+  const url = 'https://github.com/login/oauth/authorize'
+    + '?client_id=' + encodeURIComponent(GITHUB_CLIENT_ID)
+    + '&redirect_uri=' + encodeURIComponent(redirect)
+    + '&scope=' + encodeURIComponent('read:user user:email')
+    + '&state=' + encodeURIComponent(state);
+  location.href = url;
+}
+async function handleGithubRedirect() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get('code'), state = params.get('state');
+  if (!code) return;
+  // Limpia la URL para que no quede el code visible ni se reuse al recargar.
+  history.replaceState({}, '', location.origin + location.pathname);
+  if (!GITHUB_PROXY_URL) return;
+  const saved = Store.get('gh_state', null);
+  if (saved && state && state !== saved) { toast('Estado de GitHub no valido', 'err'); return; }
+  Store.del('gh_state');
+  try {
+    const r = await fetch(GITHUB_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const tok = await r.json();
+    const token = tok && tok.access_token;
+    if (!token) { toast('No se pudo iniciar sesion con GitHub', 'err'); return; }
+    const ur = await fetch('https://api.github.com/user', { headers: { Authorization: 'Bearer ' + token } });
+    const gh = await ur.json();
+    let email = gh.email;
+    if (!email) {
+      const er = await fetch('https://api.github.com/user/emails', { headers: { Authorization: 'Bearer ' + token } });
+      const emails = await er.json();
+      const primary = Array.isArray(emails) ? (emails.find(e => e.primary) || emails[0]) : null;
+      email = primary ? primary.email : (gh.login + '@users.noreply.github.com');
+    }
+    email = String(email).toLowerCase();
+    const name = gh.name || gh.login || email.split('@')[0];
+    const users = State.users;
+    let u = users.find(x => x.email === email);
+    if (!u) { u = { email, password: '', name, phone: '', github: true }; users.push(u); State.saveUsers(users); }
+    State.session = { email: u.email, name: u.name };
+    seedHistory(email);
+    toast('Sesion iniciada con GitHub como ' + (u.name || email), 'ok');
+    renderNav();
+    if (PAGE === 'cuenta') renderAccount();
+    document.dispatchEvent(new CustomEvent('kf:auth'));
+  } catch (e) {
+    toast('No se pudo iniciar sesion con GitHub. Revisa tu funcion de token.', 'err');
+  }
+}
+function mountGithubButton(m) {
+  const btn = $('[data-soc="GitHub"]', m.el);
+  if (!btn) return;
+  btn.addEventListener('click', startGithubLogin);
 }
 function mountGoogleButton(m) {
   const host = $('#googleBtnHost', m.el);
@@ -842,7 +957,6 @@ function authModal(mode = 'login') {
           <div class="auth-divider"><span id="authOr">O inicia sesión con</span></div>
           <div class="auth-social">
             <div class="auth-soc-google" id="googleBtnHost"><button type="button" class="btn auth-soc" data-soc="Google">${ICONS.googleG || ''}<span>Google</span></button></div>
-            <button type="button" class="btn auth-soc" data-soc="Apple">${ICONS.apple || ''}<span>Apple</span></button>
           </div>
         </div>
       </div>
@@ -871,8 +985,7 @@ function authModal(mode = 'login') {
     inp.type = inp.type === 'password' ? 'text' : 'password';
     $('#aEye', m.el).classList.toggle('on', inp.type === 'text');
   });
-  // Boton social de Apple (demostracion). Google se gestiona aparte (acceso real).
-  $$('[data-soc="Apple"]', m.el).forEach(b => b.addEventListener('click', () => toast('Registro con Apple disponible proximamente')));
+  // Acceso real con Google.
   mountGoogleButton(m);
 
   const fail = msg => { $('#aErr', m.el).textContent = msg; };
@@ -959,7 +1072,7 @@ function openProduct(id) {
     </div>
     <div class="modal-body">
       <div class="detail-hero">
-        <div class="detail-media"><img class="detail-img" src="${catImg(p)}" alt="${esc(p.name)}"></div>
+        <div class="detail-media"><img class="detail-img" src="${catImg(p)}" data-cat="${p && p.category ? p.category : ''}" alt="${esc(p.name)}"></div>
         <div class="brand tiny muted" style="text-transform:uppercase;letter-spacing:.06em">${esc(p.brand)} · ${esc(catName(p.category))}</div>
         <h2 class="detail-name">${esc(p.name)}</h2>
         <div class="detail-meta">
@@ -1073,7 +1186,7 @@ function productCard(p) {
   return `
   <article class="pcard" data-open="${p.id}">
     <div class="pthumb">
-      <img src="${catImg(p)}" alt="${esc(p.name)}" loading="lazy">
+      <img src="${catImg(p)}" data-cat="${p && p.category ? p.category : ''}" alt="${esc(p.name)}" loading="lazy">
       <span class="pthumb-tag">${esc(catName(p.category))}</span>
       ${p.stock <= 0 ? '<span class="pthumb-tag err" style="left:auto;right:7px">Agotado</span>' : ''}
     </div>
@@ -1564,7 +1677,7 @@ function openPicker(key) {
     const list = items.filter(p => !t || (p.name + ' ' + p.brand + ' ' + (p.tags || []).join(' ')).toLowerCase().includes(t));
     $('#pickList', m.el).innerHTML = list.length ? list.map(p => `
       <button class="pick ${BUILD[key] === p.id ? 'sel' : ''}" data-id="${p.id}">
-        <img class="pick-img" src="${catImg(p)}" alt="" loading="lazy">
+        <img class="pick-img" src="${catImg(p)}" data-cat="${p && p.category ? p.category : ''}" alt="" loading="lazy">
         <span class="p-main">
           <span class="slot-name" style="display:block">${esc(p.name)}</span>
           <span class="p-sub">${esc(slotMeta(key, p))}${p.stock <= 0 ? ' · <b style="color:var(--err)">Agotado</b>' : ''}</span>
@@ -1901,7 +2014,7 @@ function renderQuote() {
 
   tbody.innerHTML = items.map(i => `
     <div class="q-card" data-row="${i.id}">
-      <img class="q-img" src="${catImg(i.p)}" alt="" loading="lazy">
+      <img class="q-img" src="${catImg(i.p)}" data-cat="${i.p && i.p.category ? i.p.category : ''}" alt="" loading="lazy">
       <div class="q-card-main">
         <span class="qi-name">${esc(i.p.name)}</span>
         <span class="qi-sub">${esc(i.p.brand)} · ${esc(catName(i.p.category))}${i.p.stock <= 0 ? ' · <b style="color:var(--err)">sin stock</b>' : i.qty > i.p.stock ? ` · <b style="color:var(--warn)">solo ${i.p.stock} disponibles</b>` : ''}</span>
@@ -1935,11 +2048,11 @@ function renderQuote() {
       <div class="err-text" id="promoErr"></div>
       <p class="hint">Disponibles: ${Object.keys(PROMOS).join(', ')}</p>`}
     <div class="divider"></div>
-    <button class="btn btn-primary btn-block btn-pay" id="btnPay">${State.session ? `${ICONS.cart} Comprar y pagar con tarjeta` : `${ICONS.user} Regístrate para poder comprar con nosotros`}</button>
+    <button class="btn btn-primary btn-block btn-pay" id="btnPay">${ICONS.cart} Comprar y pagar con tarjeta</button>
     <div class="btn-group quote-actions" style="flex-wrap:wrap;gap:8px;margin-top:8px">
       <button class="btn btn-sm" id="btnPdf">${ICONS.print} PDF</button>
       <button class="btn btn-sm" id="btnMail">${ICONS.mail} Correo</button>
-      ${State.session ? `<button class="btn btn-sm" id="btnSave">${ICONS.box} Guardar</button>` : `<button class="btn btn-sm" id="btnLoginQuote">${ICONS.user} Inicia sesión</button>`}
+      ${State.session ? `<button class="btn btn-sm" id="btnSave">${ICONS.box} Guardar</button>` : ''}
       <button class="btn btn-ghost btn-sm btn-clear" id="btnClear">${ICONS.trash} Vaciar</button>
     </div>`;
 
@@ -1962,11 +2075,10 @@ function renderQuote() {
   $('#promoInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); applyPromo(); } });
   $('#rmPromo')?.addEventListener('click', () => { const q2 = State.quote; q2.promo = null; State.quote = q2; renderQuote(); toast('Código quitado'); });
   $('#btnPdf')?.addEventListener('click', printQuote);
-  $('#btnPay')?.addEventListener('click', () => { if (State.session) payModal(); else authModal('register'); });
+  $('#btnPay')?.addEventListener('click', () => checkoutModal());
   $('#btnMail')?.addEventListener('click', mailQuote);
   $('#btnClear')?.addEventListener('click', () => { State.quote = { items: [], promo: null }; renderQuote(); toast('Cotización vaciada'); });
   $('#btnSave')?.addEventListener('click', saveQuote);
-  $('#btnLoginQuote')?.addEventListener('click', () => authModal('register'));
   renderNav();
 }
 
@@ -2105,7 +2217,137 @@ function randomCard() {
   return { name: names[Math.floor(Math.random() * names.length)], num, exp: `${mm}/${yy}`, cvv };
 }
 
-function payModal() {
+/* ---- Datos de pedido: almacenamiento global (visible en el panel admin) ---- */
+function addOrder(rec) {
+  const list = Store.get('orders', []);
+  list.unshift(rec);
+  Store.set('orders', list.slice(0, 200));
+  try { document.dispatchEvent(new CustomEvent('kf:order')); } catch {}
+}
+function formatAddr(a) {
+  if (!a) return '-';
+  return [a.street, a.city, a.zip, a.country].filter(Boolean).join(', ');
+}
+
+/* ---- Envio del pedido al correo del negocio (servicio FormSubmit, sin backend) ----
+   Es una peticion de cliente a un servicio de correo externo; depende de internet
+   y de que la direccion kronoxforgetechnology@gmail.com haya activado el servicio
+   la primera vez (FormSubmit envia un correo de confirmacion inicial). */
+function sendOrderEmail(rec) {
+  try {
+    const body = {
+      _subject: 'Nuevo pedido ' + (rec.order || '') + ' - Kronox Forge',
+      _template: 'table',
+      Pedido: rec.order || '',
+      Fecha: rec.date || '',
+      Cliente: rec.client || '',
+      Correo_cliente: rec.email || '',
+      Telefono: rec.phone || '',
+      Direccion_envio: formatAddr(rec.shipping),
+      Direccion_facturacion: formatAddr(rec.billing),
+      Productos: (rec.items || []).map(i => i.qty + ' x ' + i.name + ' (' + money(i.price) + ')').join(' | '),
+      Subtotal: money(rec.subtotal || 0),
+      IVA_13: money(rec.tax || 0),
+      Total_pagado: money(rec.total || 0),
+      Tarjeta: (rec.brand || 'Tarjeta') + ' ****' + (rec.cardLast4 || '')
+    };
+    return fetch('https://formsubmit.co/ajax/kronoxforgetechnology@gmail.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(r => r.json()).catch(() => null);
+  } catch (e) { return Promise.resolve(null); }
+}
+
+/* ---- Ventana emergente: datos de contacto, envio y facturacion (antes de pagar) ---- */
+function checkoutModal() {
+  const q = State.quote;
+  if (!q.items.length) return toast('La cotización está vacía', 'err');
+  const items = q.items.map(i => ({ ...i, p: byId(i.id) })).filter(i => i.p);
+  const over = items.filter(i => i.qty > i.p.stock);
+  if (over.length) {
+    toast(`No puedes comprar más del stock disponible: ${over[0].p.name} (solo ${over[0].p.stock})`, 'err');
+    return;
+  }
+  const s = State.profile ? State.profile() : null;
+  const firstName = s && s.name ? s.name.split(' ')[0] : '';
+  const m = openModal(`
+    <div class="co-modal">
+      <button class="x-btn co-x" data-close aria-label="Cerrar">${ICONS.x}</button>
+      <div class="co-head">
+        <span class="co-ic">${ICONS.cart}</span>
+        <h3>Datos para tu compra</h3>
+        <p>Completa tus datos de contacto y entrega antes de pagar</p>
+      </div>
+      <form id="coForm" novalidate>
+        <div class="co-section">
+          <h4>${ICONS.user} Datos de contacto</h4>
+          <div class="pay-row">
+            <label class="field"><span>Nombre completo *</span><input type="text" id="coName" value="${esc(firstName)}" autocomplete="given-name"></label>
+            <label class="field"><span>Apellidos *</span><input type="text" id="coLast" autocomplete="family-name"></label>
+          </div>
+          <div class="pay-row">
+            <label class="field"><span>Correo electrónico *</span><input type="email" id="coEmail" value="${s ? esc(s.email || '') : ''}" placeholder="tucorreo@ejemplo.com" autocomplete="email"></label>
+            <label class="field"><span>Número de teléfono *</span><input type="tel" id="coPhone" placeholder="+503 0000 0000" autocomplete="tel"></label>
+          </div>
+        </div>
+        <div class="co-section">
+          <h4>${ICONS.box} Dirección de envío</h4>
+          <label class="field"><span>Calle y número *</span><input type="text" id="coStreet" placeholder="Ej. Calle Los Almendros #123" autocomplete="shipping street-address"></label>
+          <div class="pay-row">
+            <label class="field"><span>Ciudad *</span><input type="text" id="coCity" autocomplete="shipping address-level2"></label>
+            <label class="field"><span>Código postal *</span><input type="text" id="coZip" autocomplete="shipping postal-code"></label>
+          </div>
+          <label class="field"><span>País *</span><input type="text" id="coCountry" value="El Salvador" autocomplete="shipping country-name"></label>
+        </div>
+        <div class="co-section">
+          <h4>${ICONS.wallet} Dirección de facturación</h4>
+          <label class="co-check"><input type="checkbox" id="coSame" checked> <span>Usar la misma dirección de envío</span></label>
+          <div id="coBill" class="hidden">
+            <label class="field"><span>Calle y número</span><input type="text" id="coBStreet" autocomplete="billing street-address"></label>
+            <div class="pay-row">
+              <label class="field"><span>Ciudad</span><input type="text" id="coBCity" autocomplete="billing address-level2"></label>
+              <label class="field"><span>Código postal</span><input type="text" id="coBZip" autocomplete="billing postal-code"></label>
+            </div>
+            <label class="field"><span>País</span><input type="text" id="coBCountry" autocomplete="billing country-name"></label>
+          </div>
+        </div>
+        <div class="err-text" id="coErr"></div>
+        <button type="submit" class="pay2-btn">${ICONS.lock}<span>Continuar al pago seguro</span></button>
+        <p class="pay2-note">${ICONS.lock} Tus datos se usan solo para procesar y enviar tu pedido de demostración.</p>
+      </form>
+    </div>`, { size: 'modal-lg pay2-modal' });
+
+  const same = $('#coSame', m.el), bill = $('#coBill', m.el);
+  same.addEventListener('change', () => bill.classList.toggle('hidden', same.checked));
+  const fail = msg => { $('#coErr', m.el).textContent = msg; };
+  $('#coForm', m.el).addEventListener('submit', e => {
+    e.preventDefault();
+    const val = id => ($('#' + id, m.el).value || '').trim();
+    const name = val('coName'), last = val('coLast'), email = val('coEmail'), phone = val('coPhone');
+    const street = val('coStreet'), city = val('coCity'), zip = val('coZip'), country = val('coCountry');
+    if (name.length < 2) return fail('Ingresa tu nombre completo.');
+    if (last.length < 2) return fail('Ingresa tus apellidos.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail('Ingresa un correo electrónico válido.');
+    if (phone.replace(/\D/g, '').length < 7) return fail('Ingresa un número de teléfono válido.');
+    if (!street) return fail('Ingresa la calle y número de envío.');
+    if (!city) return fail('Ingresa la ciudad de envío.');
+    if (!zip) return fail('Ingresa el código postal de envío.');
+    if (!country) return fail('Ingresa el país de envío.');
+    const shipping = { street, city, zip, country };
+    let billing;
+    if (same.checked) billing = { ...shipping, same: true };
+    else {
+      billing = { same: false, street: val('coBStreet'), city: val('coBCity'), zip: val('coBZip'), country: val('coBCountry') };
+      if (!billing.street || !billing.city || !billing.zip || !billing.country) return fail('Completa la dirección de facturación o marca “usar la misma”.');
+    }
+    const cust = { name, lastName: last, email, phone, shipping, billing };
+    m.close();
+    payModal(cust);
+  });
+}
+
+function payModal(cust) {
   const q = State.quote;
   if (!q.items.length) return toast('La cotización está vacía', 'err');
   const items = q.items.map(i => ({ ...i, p: byId(i.id) })).filter(i => i.p);
@@ -2165,6 +2407,7 @@ function payModal() {
     </div>`, { size: 'modal-lg pay2-modal' });
 
   const nameI = $('#pcName', m.el), numI = $('#pcNum', m.el), expI = $('#pcExp', m.el), cvvI = $('#pcCvv', m.el);
+  if (cust && !nameI.value) nameI.value = (cust.name + ' ' + cust.lastName).trim();
   const setBrand = (b, manual) => {
     if (manual) brand = b;
     else { const d = detectBrand(numI.value.replace(/\s/g, '')); if (d) brand = d; }
@@ -2224,6 +2467,15 @@ function payModal() {
       rec.card = '•••• ' + num.slice(-4);
       rec.cardLast4 = num.slice(-4);
       rec.brand = brand || detectBrand(num) || 'Tarjeta';
+      rec.datetime = new Date().toLocaleString('es-SV');
+      if (cust) {
+        rec.client = (cust.name + ' ' + cust.lastName).trim();
+        rec.email = cust.email;
+        rec.phone = cust.phone;
+        rec.shipping = cust.shipping;
+        rec.billing = cust.billing;
+      }
+      addOrder(rec);
       if (State.session) addHistory(State.session.email, rec);
       State.quote = { items: [], promo: null };
       m.close();
@@ -2235,24 +2487,67 @@ function payModal() {
 function paySuccess(rec) {
   const last4 = rec.cardLast4 || (rec.card || '').replace(/\D/g, '').slice(-4) || '****';
   const masked = '****-****-****-' + last4;
+  const emailP = sendOrderEmail(rec);
   const m = openModal(`
     <div class="modal-body center pay-done">
       <div class="pay-check">${ICONS.check}</div>
-      <h3 style="margin:12px 0 4px">¡Pago exitoso!</h3>
-      <p class="tiny muted" style="margin:0 0 14px">Gracias por tu compra en Kronox Forge.</p>
+      <h3 style="margin:12px 0 4px">¡Pedido realizado!</h3>
+      <p class="tiny muted" style="margin:0 0 14px">Gracias por tu compra en Kronox Forge${rec.client ? ', ' + esc(rec.client) : ''}.</p>
+      <div class="track" id="track">
+        <div class="track-step done"><span class="dot">${ICONS.check}</span><small>Pago confirmado</small></div>
+        <div class="track-step" data-step="1"><span class="dot"></span><small>Preparando</small></div>
+        <div class="track-step" data-step="2"><span class="dot"></span><small>Enviado</small></div>
+        <div class="track-step" data-step="3"><span class="dot"></span><small>En camino</small></div>
+        <div class="track-step" data-step="4"><span class="dot"></span><small>Entregado</small></div>
+      </div>
+      <p class="track-eta" id="trackEta">Preparando tu pedido…</p>
       <div class="pay-rcpt">
         <div class="kv"><span class="k">N.º de pedido</span><b class="mono">${esc(rec.order)}</b></div>
+        <div class="kv"><span class="k">Envío a</span><b>${esc(formatAddr(rec.shipping))}</b></div>
         <div class="kv"><span class="k">N.º de tarjeta</span><b class="mono">${esc(masked)}</b></div>
-        <div class="kv"><span class="k">Marca</span><b>${esc(rec.brand)}</b></div>
         <div class="kv"><span class="k">Monto pagado</span><b class="mono">${money(rec.total)}</b></div>
-        <div class="kv"><span class="k">Fecha</span><b>${esc(rec.date)}</b></div>
+        <div class="kv"><span class="k">Fecha</span><b>${esc(rec.datetime || rec.date)}</b></div>
       </div>
-      <p class="hint center" style="margin:12px 0 0">${ICONS.info} Compra de demostración. No se realizó ningún cobro real.</p>
-      <button class="btn btn-primary btn-block" id="dlReceipt" style="margin-top:14px">${ICONS.print} Descargar comprobante de pago</button>
+      <p class="hint" id="mailNote" style="margin:12px 0 0">${ICONS.mail} Enviando una copia del pedido a kronoxforgetechnology@gmail.com…</p>
+      <button class="btn btn-primary btn-block" id="dlReceipt" style="margin-top:14px">${ICONS.print} Descargar PDF con mis datos</button>
       <button class="btn btn-block" data-close style="margin-top:8px">Listo</button>
     </div>`, { size: 'modal-lg' });
+
+  // El cliente recibe su PDF automaticamente
+  setTimeout(() => downloadReceipt(rec), 500);
+
+  // Simulacion de entrega paso a paso
+  const steps = Array.from(m.el.querySelectorAll('.track-step[data-step]'));
+  const etas = [
+    'Estamos preparando tu pedido en el almacén.',
+    'Tu pedido ha sido enviado.',
+    'El repartidor va en camino a tu dirección.',
+    '¡Pedido entregado! Gracias por comprar en Kronox Forge.'
+  ];
+  let k = 0;
+  const tick = () => {
+    if (k >= steps.length) return;
+    steps[k].classList.add('done');
+    const eta = m.el.querySelector('#trackEta');
+    if (eta) eta.textContent = etas[k] || '';
+    k++;
+    if (k < steps.length) setTimeout(tick, 1400);
+  };
+  setTimeout(tick, 900);
+
+  // Estado del envio del correo al negocio
+  if (emailP && emailP.then) emailP.then(r => {
+    const n = m.el.querySelector('#mailNote');
+    if (!n) return;
+    if (r && (r.success === 'true' || r.success === true)) {
+      n.innerHTML = `${ICONS.mail} Copia del pedido enviada a kronoxforgetechnology@gmail.com`;
+    } else {
+      n.innerHTML = `${ICONS.info} No se pudo enviar el correo automático (revisa la conexión o la activación del servicio). Tu PDF ya se descargó y el pedido quedó registrado en el panel.`;
+    }
+  });
+
   $('#dlReceipt', m.el)?.addEventListener('click', () => downloadReceipt(rec));
-  toast('Pago realizado · Pedido ' + rec.order, 'ok');
+  toast('Pedido realizado · ' + rec.order, 'ok');
   renderQuote(); renderNav();
 }
 
@@ -2278,8 +2573,23 @@ function buildReceiptPDF(rec, masked, now) {
   kv('Fecha:', rec.date || '-');
   kv('Cliente:', rec.client || 'Cliente');
   kv('Correo:', rec.email || '-');
+  kv('Telefono:', rec.phone || '-');
   kv('N.o de tarjeta:', masked);
   kv('Marca de tarjeta:', rec.brand || 'Tarjeta');
+  nl(6);
+  const wrapLine = (label, text, max) => {
+    const t = String(text || '-');
+    seg.push({ x: 56, y: y, size: 11, bold: false, text: label });
+    if (t.length <= (max || 46)) { seg.push({ x: 160, y: y, size: 11, bold: true, text: t }); nl(18); }
+    else {
+      const words = t.split(' '); let cur = ''; const lines = [];
+      words.forEach(w => { if ((cur + ' ' + w).trim().length > (max || 46)) { lines.push(cur.trim()); cur = w; } else cur += ' ' + w; });
+      if (cur.trim()) lines.push(cur.trim());
+      lines.forEach((ln, idx) => { seg.push({ x: 160, y: y, size: 11, bold: true, text: ln }); nl(16); });
+    }
+  };
+  wrapLine('Direccion de envio:', formatAddr(rec.shipping));
+  wrapLine('Direccion de facturacion:', formatAddr(rec.billing));
   nl(10);
   line('PRODUCTOS', 12, true); nl(18);
   seg.push({ x: 56, y: y, size: 9, bold: true, text: 'Producto' });
@@ -2419,10 +2729,14 @@ let PROFILE = { use:'estudio', budget:900, form:'laptop', brands:[] };
 
 function candidatePool() {
   const laptops = PRODUCTS.filter(p => p.category === 'laptops');
-  if (PROFILE.form === 'laptop') return laptops.map(p => ({ kind:'laptop', p, uses:p.uses, price:p.price, stock:p.stock }));
-  if (PROFILE.form === 'escritorio') return DESKTOP_KITS.map(k => ({ kind:'kit', p:k, uses:k.uses, price:k.price, stock:k.stock }));
-  return [...laptops.map(p => ({ kind:'laptop', p, uses:p.uses, price:p.price, stock:p.stock })),
-          ...DESKTOP_KITS.map(k => ({ kind:'kit', p:k, uses:k.uses, price:k.price, stock:k.stock }))];
+  // PCs de escritorio reales del catálogo (laptops2/3/4.js) como candidatos.
+  const pcs = PRODUCTS.filter(p => p.category === 'escritorio')
+    .map(p => ({ kind:'pc', p, uses:p.uses || {}, price:p.price, stock:p.stock }));
+  const lapCands = laptops.map(p => ({ kind:'laptop', p, uses:p.uses, price:p.price, stock:p.stock }));
+  const kitCands = DESKTOP_KITS.map(k => ({ kind:'kit', p:k, uses:k.uses, price:k.price, stock:k.stock }));
+  if (PROFILE.form === 'laptop') return lapCands;
+  if (PROFILE.form === 'escritorio') return [...pcs, ...kitCands];
+  return [...lapCands, ...pcs, ...kitCands];
 }
 
 function scoreCandidate(c) {
@@ -2446,13 +2760,16 @@ function explain(c, sc) {
   bits.push(fit >= 3 ? `Pensado para ${u.name.toLowerCase()}: ${c.p.why || (c.p.perf?.cpu ? `${c.p.perf.cpu}/100 en CPU` : '')}` :
             fit === 2 ? `Cumple con ${u.name.toLowerCase()} aunque no es su enfoque principal` :
             `Uso limitado para ${u.name.toLowerCase()}`);
-  if (c.kind === 'laptop') {
-    bits.push(`${c.p.specs.Procesador || ''}`);
-    bits.push(`${c.p.ramGB} GB de RAM · ${c.p.specs.Almacenamiento || ''}`);
-    if (c.p.perf?.gpu >= 50) bits.push(`GPU dedicada con índice ${c.p.perf.gpu}/100`);
-  } else {
+  if (c.kind === 'kit') {
     const parts = c.p.parts.map(id => byId(id)?.name).filter(Boolean);
     bits.push(`${parts.length} componentes: ${parts.slice(0, 3).join(', ')}…`);
+  } else {
+    // Laptop o PC de escritorio real: describir por especificaciones.
+    const sp = c.p.specs || {};
+    if (sp.Procesador) bits.push(`${sp.Procesador}`);
+    const ram = c.p.ramGB ? `${c.p.ramGB} GB de RAM` : (sp.Memoria ? `${sp.Memoria} de RAM` : '');
+    bits.push([ram, sp.Almacenamiento].filter(Boolean).join(' · '));
+    if (c.p.perf?.gpu >= 50) bits.push(`GPU dedicada con índice ${c.p.perf.gpu}/100`);
   }
   bits.push(c.price <= PROFILE.budget ? `${money(c.price)}, dentro de tu presupuesto de ${money(PROFILE.budget)}`
     : `${money(c.price)}, ${money(c.price - PROFILE.budget)} por encima de tu presupuesto`);
@@ -2484,9 +2801,12 @@ function renderProfileForm() {
       </div>
       <div class="full">
         <span class="q-label">Marca de preferencia <span class="hint">(opcional, varias)</span></span>
-        <div class="chips" id="brandChips">
-          ${BRANDS.map(b => `<button type="button" class="chip ${PROFILE.brands.includes(b) ? 'active' : ''}" data-brand="${esc(b)}">${esc(b)}</button>`).join('')}
+        <div class="brand-carousel">
+          <button type="button" class="brand-nav" id="brandPrev" aria-label="Marcas anteriores">&#10094;</button>
+          <div class="brand-viewport"><div class="chips" id="brandChips"></div></div>
+          <button type="button" class="brand-nav" id="brandNext" aria-label="Mas marcas">&#10095;</button>
         </div>
+        <div class="brand-dots" id="brandDots"></div>
       </div>
     </div>
     <div class="btn-group" style="margin-top:16px">
@@ -2503,11 +2823,40 @@ function renderProfileForm() {
     PROFILE.form = b.dataset.form;
     $$('#formToggle [data-form]').forEach(x => x.classList.toggle('active', x === b));
   }));
-  $$('#brandChips [data-brand]').forEach(b => b.addEventListener('click', () => {
-    const v = b.dataset.brand;
-    PROFILE.brands = PROFILE.brands.includes(v) ? PROFILE.brands.filter(x => x !== v) : [...PROFILE.brands, v];
-    b.classList.toggle('active');
-  }));
+  // Paginado de marcas: la larga lista de chips se divide en paginas
+  // navegables con las flechas < >, dentro de la misma pantalla.
+  (function brandPager() {
+    const vp = $('#brandChips'); if (!vp) return;
+    const per = window.matchMedia('(max-width:560px)').matches ? 8 : 15;
+    const pages = Math.max(1, Math.ceil(BRANDS.length / per));
+    let page = 0;
+    const dots = $('#brandDots');
+    if (dots) {
+      dots.innerHTML = Array.from({ length: pages }, (_, i) =>
+        `<button type="button" class="brand-dot" data-dot="${i}" aria-label="Pagina ${i + 1}"></button>`).join('');
+      $$('#brandDots [data-dot]').forEach(d => d.addEventListener('click', () => { page = +d.dataset.dot; draw(); }));
+    }
+    const draw = () => {
+      const start = page * per;
+      const slice = BRANDS.slice(start, start + per);
+      vp.innerHTML = slice.map(b =>
+        `<button type="button" class="chip ${PROFILE.brands.includes(b) ? 'active' : ''}" data-brand="${esc(b)}">${esc(b)}</button>`).join('');
+      $$('#brandChips [data-brand]').forEach(btn => btn.addEventListener('click', () => {
+        const v = btn.dataset.brand;
+        PROFILE.brands = PROFILE.brands.includes(v) ? PROFILE.brands.filter(x => x !== v) : [...PROFILE.brands, v];
+        btn.classList.toggle('active');
+      }));
+      const prev = $('#brandPrev'), next = $('#brandNext');
+      if (prev) prev.disabled = page === 0;
+      if (next) next.disabled = page >= pages - 1;
+      $$('#brandDots [data-dot]').forEach(d => d.classList.toggle('active', +d.dataset.dot === page));
+    };
+    const go = d => { page = Math.min(pages - 1, Math.max(0, page + d)); draw(); };
+    const pb = $('#brandPrev'), nb = $('#brandNext');
+    if (pb) pb.addEventListener('click', () => go(-1));
+    if (nb) nb.addEventListener('click', () => go(1));
+    draw();
+  })();
   $('#findBtn').addEventListener('click', renderRecommendations);
   $('#resetProfile').addEventListener('click', () => { PROFILE = { use:'estudio', budget:900, form:'laptop', brands:[] }; renderProfileForm(); $('#recResults').innerHTML = ''; });
 }
@@ -2545,10 +2894,10 @@ function renderRecommendations() {
             <div class="rc3-body">
               ${i === 0 ? '<span class="badge badge-ok" style="align-self:flex-start">Mejor opci\u00f3n</span>' : ''}
               <b class="rc3-name">${esc(c.p.name)}</b>
-              <div class="row" style="gap:6px"><span class="badge">${c.kind === 'kit' ? 'Escritorio armado' : 'Laptop'}</span><span class="spacer"></span><span class="price price-sm mono">${money(c.price)}</span></div>
+              <div class="row" style="gap:6px"><span class="badge">${c.kind === 'kit' ? 'Escritorio armado' : c.kind === 'pc' ? 'Escritorio' : 'Laptop'}</span><span class="spacer"></span><span class="price price-sm mono">${money(c.price)}</span></div>
               <p class="rc3-why">${esc(explain(c, sc))}</p>
               <div class="rc3-acts">
-                ${c.kind === 'laptop'
+                ${c.kind !== 'kit'
                   ? `<button class="btn btn-sm" data-openrec="${c.p.id}">Ver detalle</button>
                      <button class="btn btn-sm btn-primary" data-addrec="${c.p.id}">${ICONS.cart} Cotizar</button>`
                   : `<button class="btn btn-sm" data-kitdetail="${c.p.id}">Componentes</button>
@@ -2931,6 +3280,12 @@ function boot() {
   renderNav();
   renderFooter();
   document.addEventListener('kf:nav', renderNav);
+  // Al iniciar o cerrar sesion, refresca al instante los botones que dependen
+  // de la sesion (p. ej. el de pagar / "Inicia sesion" del cotizador).
+  document.addEventListener('kf:auth', () => {
+    if (PAGE === 'cotizador') renderQuote();
+    if (PAGE === 'index') renderCatalog();
+  });
   if (PAGE === 'index') initIndex();
   if (PAGE === 'compatibilidad') initCompat();
   if (PAGE === 'cotizador') initCotizador();

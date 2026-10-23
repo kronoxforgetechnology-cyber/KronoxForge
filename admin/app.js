@@ -69,6 +69,7 @@ const ICONS = {
   eye: ico('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>'),
   googleG: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"/><path fill="#34A853" d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.5 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.8V6.5H1.4a12 12 0 0 0 0 11z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.5l4 3.1C6.3 6.8 8.9 4.8 12 4.8z"/></svg>',
   apple: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16.4 12.9c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8s-1.8-.8-3-.8c-1.5 0-2.9.9-3.7 2.2-1.6 2.7-.4 6.8 1.1 9 .7 1.1 1.6 2.3 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.6.7 2.8.7c1.2 0 1.9-1.1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4s-2.2-.9-2.4-3.3zM14.2 5.9c.6-.7 1-1.8.9-2.9-.9 0-2 .6-2.6 1.4-.6.6-1 1.7-.9 2.7 1 .1 2-.5 2.6-1.2z"/></svg>',
+  github: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.26 5.69.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>',
   wallet: ico('<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 14h2"/>'),
   lock: ico('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>'),
   shield: ico('<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/>')
@@ -332,6 +333,15 @@ const PRODUCTS = [
     specs:{Tipo:'Torre de aire, 1 ventilador de 120 mm',Altura:'158 mm',Ventilador:'Noctua NF-F12 PWM (300-1500 RPM)','Nivel de ruido':'22.4 dB(A) máx.','Flujo de aire':'93.4 m³/h',Heatpipes:'5 de cobre de 6 mm',Sockets:'Intel LGA1700/1200/115x, AMD AM5/AM4/AM3(+)',TDP:'Recomendado para CPUs de hasta 180 W con buen flujo',Garantía:'6 años'} }
 ];
 
+/* Productos adicionales cargados desde archivos aparte (p.ej. js/laptops2.js)
+   mediante window.EXTRA_PRODUCTS, para no acumular todo el catalogo en
+   un solo archivo. Se integran al arreglo PRODUCTS (mutable y compartido). */
+(function mergeExtraProducts() {
+  const extra = window.EXTRA_PRODUCTS;
+  if (!Array.isArray(extra)) return;
+  extra.forEach(p => { if (p && p.id && !PRODUCTS.some(x => x.id === p.id)) PRODUCTS.push(p); });
+})();
+
 /* Catálogo administrable desde el panel admin (carpeta admin/).
    Si el admin guardó cambios en localStorage, se aplican sobre PRODUCTS
    en memoria (el arreglo es mutable y todo el sitio lo comparte). */
@@ -448,6 +458,25 @@ const TEST_USER = { email:'admin@kronoxlabs.com', password:'Admin1234', name:'Ad
    ============================================================ */
 const GOOGLE_CLIENT_ID = '77666275658-9qlbm5opre7hp436qioi4hqunregjjqv.apps.googleusercontent.com'; // <-- pega aqui tu ID de cliente de Google
 
+/* ============================================================
+   ACCESO CON GITHUB (OAuth)
+   Importante: a diferencia de Google, GitHub NO permite iniciar sesion
+   100% desde el navegador. Hace falta una pequena funcion en la nube
+   (serverless) que intercambie el "code" por un token, porque ese paso
+   exige el client_secret, que NUNCA debe quedar en el codigo del sitio.
+   Pasos:
+   1) En https://github.com/settings/developers > "OAuth Apps" crea una app.
+        - Homepage URL: la URL publicada (p. ej. https://tuusuario.github.io/KronoxForge/).
+        - Authorization callback URL: la pagina de login publicada con https
+          (p. ej. https://tuusuario.github.io/KronoxForge/cuenta.html).
+   2) Copia el "Client ID" en GITHUB_CLIENT_ID.
+   3) Despliega la funcion de intercambio (codigo listo en la respuesta del chat)
+      en Cloudflare Workers / Vercel / Netlify y pega su URL en GITHUB_PROXY_URL.
+   4) GitHub NO funciona desde file:// : el sitio debe estar publicado en https.
+   ============================================================ */
+const GITHUB_CLIENT_ID = '';  // <-- pega aqui el Client ID de tu OAuth App de GitHub
+const GITHUB_PROXY_URL = '';  // <-- pega aqui la URL de tu funcion que cambia el code por un token
+
 let _gisPromise = null;
 function ensureGis() {
   if (window.google && google.accounts && google.accounts.id) return Promise.resolve();
@@ -484,6 +513,70 @@ function handleGoogleCredential(resp, m) {
   renderNav();
   if (PAGE === 'cuenta') renderAccount();
   document.dispatchEvent(new CustomEvent('kf:auth'));
+}
+function startGithubLogin() {
+  if (!GITHUB_CLIENT_ID || !GITHUB_PROXY_URL) {
+    toast('Para activar el acceso con GitHub, configura GITHUB_CLIENT_ID y GITHUB_PROXY_URL.', 'err');
+    return;
+  }
+  const state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  Store.set('gh_state', state);
+  // Volvemos a esta misma pagina; GitHub devuelve ?code=...&state=...
+  const redirect = location.origin + location.pathname;
+  const url = 'https://github.com/login/oauth/authorize'
+    + '?client_id=' + encodeURIComponent(GITHUB_CLIENT_ID)
+    + '&redirect_uri=' + encodeURIComponent(redirect)
+    + '&scope=' + encodeURIComponent('read:user user:email')
+    + '&state=' + encodeURIComponent(state);
+  location.href = url;
+}
+async function handleGithubRedirect() {
+  const params = new URLSearchParams(location.search);
+  const code = params.get('code'), state = params.get('state');
+  if (!code) return;
+  // Limpia la URL para que no quede el code visible ni se reuse al recargar.
+  history.replaceState({}, '', location.origin + location.pathname);
+  if (!GITHUB_PROXY_URL) return;
+  const saved = Store.get('gh_state', null);
+  if (saved && state && state !== saved) { toast('Estado de GitHub no valido', 'err'); return; }
+  Store.del('gh_state');
+  try {
+    const r = await fetch(GITHUB_PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const tok = await r.json();
+    const token = tok && tok.access_token;
+    if (!token) { toast('No se pudo iniciar sesion con GitHub', 'err'); return; }
+    const ur = await fetch('https://api.github.com/user', { headers: { Authorization: 'Bearer ' + token } });
+    const gh = await ur.json();
+    let email = gh.email;
+    if (!email) {
+      const er = await fetch('https://api.github.com/user/emails', { headers: { Authorization: 'Bearer ' + token } });
+      const emails = await er.json();
+      const primary = Array.isArray(emails) ? (emails.find(e => e.primary) || emails[0]) : null;
+      email = primary ? primary.email : (gh.login + '@users.noreply.github.com');
+    }
+    email = String(email).toLowerCase();
+    const name = gh.name || gh.login || email.split('@')[0];
+    const users = State.users;
+    let u = users.find(x => x.email === email);
+    if (!u) { u = { email, password: '', name, phone: '', github: true }; users.push(u); State.saveUsers(users); }
+    State.session = { email: u.email, name: u.name };
+    seedHistory(email);
+    toast('Sesion iniciada con GitHub como ' + (u.name || email), 'ok');
+    renderNav();
+    if (PAGE === 'cuenta') renderAccount();
+    document.dispatchEvent(new CustomEvent('kf:auth'));
+  } catch (e) {
+    toast('No se pudo iniciar sesion con GitHub. Revisa tu funcion de token.', 'err');
+  }
+}
+function mountGithubButton(m) {
+  const btn = $('[data-soc="GitHub"]', m.el);
+  if (!btn) return;
+  btn.addEventListener('click', startGithubLogin);
 }
 function mountGoogleButton(m) {
   const host = $('#googleBtnHost', m.el);
@@ -842,7 +935,6 @@ function authModal(mode = 'login') {
           <div class="auth-divider"><span id="authOr">O inicia sesión con</span></div>
           <div class="auth-social">
             <div class="auth-soc-google" id="googleBtnHost"><button type="button" class="btn auth-soc" data-soc="Google">${ICONS.googleG || ''}<span>Google</span></button></div>
-            <button type="button" class="btn auth-soc" data-soc="Apple">${ICONS.apple || ''}<span>Apple</span></button>
           </div>
         </div>
       </div>
@@ -871,8 +963,7 @@ function authModal(mode = 'login') {
     inp.type = inp.type === 'password' ? 'text' : 'password';
     $('#aEye', m.el).classList.toggle('on', inp.type === 'text');
   });
-  // Boton social de Apple (demostracion). Google se gestiona aparte (acceso real).
-  $$('[data-soc="Apple"]', m.el).forEach(b => b.addEventListener('click', () => toast('Registro con Apple disponible proximamente')));
+  // Acceso real con Google.
   mountGoogleButton(m);
 
   const fail = msg => { $('#aErr', m.el).textContent = msg; };
@@ -2931,6 +3022,12 @@ function boot() {
   renderNav();
   renderFooter();
   document.addEventListener('kf:nav', renderNav);
+  // Al iniciar o cerrar sesion, refresca al instante los botones que dependen
+  // de la sesion (p. ej. el de pagar / "Inicia sesion" del cotizador).
+  document.addEventListener('kf:auth', () => {
+    if (PAGE === 'cotizador') renderQuote();
+    if (PAGE === 'index') renderCatalog();
+  });
   if (PAGE === 'index') initIndex();
   if (PAGE === 'compatibilidad') initCompat();
   if (PAGE === 'cotizador') initCotizador();

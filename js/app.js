@@ -25,7 +25,7 @@ const Store = {
 /* ------------------------------------------------------------
    1. Iconos (SVG inline, trazo fino)
    ------------------------------------------------------------ */
-const ico = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ico = d => `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ICONS = {
   laptop: ico('<rect x="3" y="5" width="18" height="11" rx="1.5"/><path d="M2 19h20l-1.5-3H3.5z"/>'),
   monitor: ico('<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M9 20h6M12 16v4"/>'),
@@ -47,7 +47,7 @@ const ICONS = {
   search: ico('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>'),
   cart: ico('<path d="M3 4h2l2.4 11h10L20 7H6"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>'),
   user: ico('<circle cx="12" cy="8" r="4"/><path d="M4.5 20a7.5 7.5 0 0115 0"/>'),
-  heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-9.6A4.4 4.4 0 0112 7.6a4.4 4.4 0 017.5 2.8C19.5 15.4 12 20 12 20z"/></svg>',
+  heart: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-9.6A4.4 4.4 0 0112 7.6a4.4 4.4 0 017.5 2.8C19.5 15.4 12 20 12 20z"/></svg>',
   check: ico('<path d="M5 12.5l4.5 4.5L19 7"/>'),
   x: ico('<path d="M6 6l12 12M18 6L6 18"/>'),
   plus: ico('<path d="M12 5v14M5 12h14"/>'),
@@ -377,7 +377,7 @@ const prodImg = p => {
 /* Prefijo de ruta: dentro de /admin/ las imagenes relativas apuntan a ../img/... */
 const IMG_BASE = location.pathname.includes('/admin/') ? '../' : '';
 const withBase = s => (s && !/^(https?:)?\/\//i.test(s) && !s.startsWith('/') && !s.startsWith('data:')) ? IMG_BASE + s : s;
-const catImg = p => withBase(p.img || prodImg(p) || CAT_IMG[p?.category] || '');
+const catImg = p => withBase(prodImg(p) || p.img || CAT_IMG[p?.category] || '');
 const thumbHTML = (p, cls) => catImg(p)
   ? `<img class="${cls}" src="${catImg(p)}" data-cat="${p && p.category ? p.category : ''}" alt="" loading="lazy">`
   : `<span class="picon" style="width:34px;height:34px">${ICONS[p.icon] || ICONS.box}</span>`;
@@ -466,6 +466,18 @@ const PROMOS = {
 })();
 const IVA = 0.13;
 const TEST_USER = { email:'admin@kronoxlabs.com', password:'Admin1234', name:'Administrador', phone:'+503 7000-0000' };
+
+/* ============================================================
+   CONFIGURACION DE ENVIO DE PEDIDOS POR CORREO (FormSubmit)
+   ------------------------------------------------------------
+   FORMSUBMIT_ID: pega aqui el codigo que te entrega FormSubmit
+   tras activar tu correo (p. ej. "abc12345def..."). Con el codigo
+   tu direccion queda oculta. Si lo dejas vacio, se usa tu correo
+   directo (tambien funciona, pero exige activacion la 1a vez).
+   BUSINESS_EMAIL: correo del negocio que recibe los pedidos.
+   ============================================================ */
+const FORMSUBMIT_ID = '';
+const BUSINESS_EMAIL = 'kronoxforgetechnology@gmail.com';
 
 /* ============================================================
    ACCESO CON GOOGLE (Google Identity Services)
@@ -2238,20 +2250,24 @@ function sendOrderEmail(rec) {
     const body = {
       _subject: 'Nuevo pedido ' + (rec.order || '') + ' - Kronox Forge',
       _template: 'table',
+      _cc: rec.email || '',
       Pedido: rec.order || '',
-      Fecha: rec.date || '',
+      Fecha: rec.datetime || rec.date || '',
       Cliente: rec.client || '',
       Correo_cliente: rec.email || '',
       Telefono: rec.phone || '',
       Direccion_envio: formatAddr(rec.shipping),
-      Direccion_facturacion: formatAddr(rec.billing),
+      Direccion_facturacion: rec.billing && rec.billing.same ? 'Igual que el envio' : formatAddr(rec.billing),
       Productos: (rec.items || []).map(i => i.qty + ' x ' + i.name + ' (' + money(i.price) + ')').join(' | '),
       Subtotal: money(rec.subtotal || 0),
       IVA_13: money(rec.tax || 0),
       Total_pagado: money(rec.total || 0),
       Tarjeta: (rec.brand || 'Tarjeta') + ' ****' + (rec.cardLast4 || '')
     };
-    return fetch('https://formsubmit.co/ajax/kronoxforgetechnology@gmail.com', {
+    const endpoint = FORMSUBMIT_ID
+      ? 'https://formsubmit.co/ajax/' + FORMSUBMIT_ID
+      : 'https://formsubmit.co/ajax/' + BUSINESS_EMAIL;
+    return fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(body)
@@ -2263,6 +2279,11 @@ function sendOrderEmail(rec) {
 function checkoutModal() {
   const q = State.quote;
   if (!q.items.length) return toast('La cotización está vacía', 'err');
+  // Comprar requiere una cuenta iniciada
+  if (!State.session) {
+    requireLoginModal();
+    return;
+  }
   const items = q.items.map(i => ({ ...i, p: byId(i.id) })).filter(i => i.p);
   const over = items.filter(i => i.qty > i.p.stock);
   if (over.length) {
@@ -2270,7 +2291,11 @@ function checkoutModal() {
     return;
   }
   const s = State.profile ? State.profile() : null;
-  const firstName = s && s.name ? s.name.split(' ')[0] : '';
+  const parts = s && s.name ? s.name.trim().split(/\s+/) : [];
+  const firstName = parts.length ? parts[0] : '';
+  const lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+  const prefEmail = s && s.email ? s.email : '';
+  const prefPhone = s && s.phone ? String(s.phone).replace(/\D/g, '') : '';
   const m = openModal(`
     <div class="co-modal">
       <button class="x-btn co-x" data-close aria-label="Cerrar">${ICONS.x}</button>
@@ -2284,11 +2309,11 @@ function checkoutModal() {
           <h4>${ICONS.user} Datos de contacto</h4>
           <div class="pay-row">
             <label class="field"><span>Nombre completo *</span><input type="text" id="coName" value="${esc(firstName)}" autocomplete="given-name"></label>
-            <label class="field"><span>Apellidos *</span><input type="text" id="coLast" autocomplete="family-name"></label>
+            <label class="field"><span>Apellidos *</span><input type="text" id="coLast" value="${esc(lastName)}" autocomplete="family-name"></label>
           </div>
           <div class="pay-row">
-            <label class="field"><span>Correo electrónico *</span><input type="email" id="coEmail" value="${s ? esc(s.email || '') : ''}" placeholder="tucorreo@ejemplo.com" autocomplete="email"></label>
-            <label class="field"><span>Número de teléfono *</span><input type="tel" id="coPhone" placeholder="+503 0000 0000" autocomplete="tel"></label>
+            <label class="field"><span>Correo (debe ser @gmail.com) *</span><input type="email" id="coEmail" value="${esc(prefEmail)}" placeholder="tucorreo@gmail.com" autocomplete="email"></label>
+            <label class="field"><span>Teléfono (solo números) *</span><input type="tel" id="coPhone" value="${esc(prefPhone)}" inputmode="numeric" maxlength="15" placeholder="72000000" autocomplete="tel"></label>
           </div>
         </div>
         <div class="co-section">
@@ -2296,7 +2321,7 @@ function checkoutModal() {
           <label class="field"><span>Calle y número *</span><input type="text" id="coStreet" placeholder="Ej. Calle Los Almendros #123" autocomplete="shipping street-address"></label>
           <div class="pay-row">
             <label class="field"><span>Ciudad *</span><input type="text" id="coCity" autocomplete="shipping address-level2"></label>
-            <label class="field"><span>Código postal *</span><input type="text" id="coZip" autocomplete="shipping postal-code"></label>
+            <label class="field"><span>Código postal (solo números) *</span><input type="text" id="coZip" inputmode="numeric" maxlength="10" autocomplete="shipping postal-code"></label>
           </div>
           <label class="field"><span>País *</span><input type="text" id="coCountry" value="El Salvador" autocomplete="shipping country-name"></label>
         </div>
@@ -2304,12 +2329,12 @@ function checkoutModal() {
           <h4>${ICONS.wallet} Dirección de facturación</h4>
           <label class="co-check"><input type="checkbox" id="coSame" checked> <span>Usar la misma dirección de envío</span></label>
           <div id="coBill" class="hidden">
-            <label class="field"><span>Calle y número</span><input type="text" id="coBStreet" autocomplete="billing street-address"></label>
+            <label class="field"><span>Calle y número *</span><input type="text" id="coBStreet" autocomplete="billing street-address"></label>
             <div class="pay-row">
-              <label class="field"><span>Ciudad</span><input type="text" id="coBCity" autocomplete="billing address-level2"></label>
-              <label class="field"><span>Código postal</span><input type="text" id="coBZip" autocomplete="billing postal-code"></label>
+              <label class="field"><span>Ciudad *</span><input type="text" id="coBCity" autocomplete="billing address-level2"></label>
+              <label class="field"><span>Código postal (solo números) *</span><input type="text" id="coBZip" inputmode="numeric" maxlength="10" autocomplete="billing postal-code"></label>
             </div>
-            <label class="field"><span>País</span><input type="text" id="coBCountry" autocomplete="billing country-name"></label>
+            <label class="field"><span>País *</span><input type="text" id="coBCountry" value="El Salvador" autocomplete="billing country-name"></label>
           </div>
         </div>
         <div class="err-text" id="coErr"></div>
@@ -2320,30 +2345,67 @@ function checkoutModal() {
 
   const same = $('#coSame', m.el), bill = $('#coBill', m.el);
   same.addEventListener('change', () => bill.classList.toggle('hidden', same.checked));
+
+  // Restricciones de entrada en tiempo real
+  const onlyDigits = el => el && el.addEventListener('input', () => { el.value = el.value.replace(/\D/g, ''); });
+  const onlyLetters = el => el && el.addEventListener('input', () => { el.value = el.value.replace(/[0-9]/g, ''); });
+  onlyDigits($('#coPhone', m.el));
+  onlyDigits($('#coZip', m.el));
+  onlyDigits($('#coBZip', m.el));
+  onlyLetters($('#coName', m.el));
+  onlyLetters($('#coLast', m.el));
+
+  const reEmail = /^[^\s@]+@gmail\.com$/i;
   const fail = msg => { $('#coErr', m.el).textContent = msg; };
   $('#coForm', m.el).addEventListener('submit', e => {
     e.preventDefault();
     const val = id => ($('#' + id, m.el).value || '').trim();
-    const name = val('coName'), last = val('coLast'), email = val('coEmail'), phone = val('coPhone');
-    const street = val('coStreet'), city = val('coCity'), zip = val('coZip'), country = val('coCountry');
-    if (name.length < 2) return fail('Ingresa tu nombre completo.');
-    if (last.length < 2) return fail('Ingresa tus apellidos.');
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail('Ingresa un correo electrónico válido.');
-    if (phone.replace(/\D/g, '').length < 7) return fail('Ingresa un número de teléfono válido.');
+    const name = val('coName'), last = val('coLast'), email = val('coEmail').toLowerCase();
+    const phone = val('coPhone').replace(/\D/g, '');
+    const street = val('coStreet'), city = val('coCity'), zip = val('coZip').replace(/\D/g, ''), country = val('coCountry');
+    if (name.length < 2) return fail('Ingresa tu nombre (solo letras).');
+    if (last.length < 2) return fail('Ingresa tus apellidos (solo letras).');
+    if (!email) return fail('El correo es obligatorio.');
+    if (!reEmail.test(email)) return fail('El correo debe ser una dirección válida que termine en @gmail.com.');
+    if (!phone) return fail('El teléfono es obligatorio.');
+    if (phone.length < 8) return fail('El teléfono debe tener al menos 8 dígitos (solo números).');
     if (!street) return fail('Ingresa la calle y número de envío.');
     if (!city) return fail('Ingresa la ciudad de envío.');
-    if (!zip) return fail('Ingresa el código postal de envío.');
+    if (!zip) return fail('Ingresa el código postal de envío (solo números).');
     if (!country) return fail('Ingresa el país de envío.');
     const shipping = { street, city, zip, country };
     let billing;
     if (same.checked) billing = { ...shipping, same: true };
     else {
-      billing = { same: false, street: val('coBStreet'), city: val('coBCity'), zip: val('coBZip'), country: val('coBCountry') };
-      if (!billing.street || !billing.city || !billing.zip || !billing.country) return fail('Completa la dirección de facturación o marca “usar la misma”.');
+      const bStreet = val('coBStreet'), bCity = val('coBCity'), bZip = val('coBZip').replace(/\D/g, ''), bCountry = val('coBCountry');
+      if (!bStreet) return fail('Ingresa la calle y número de facturación (o marca “usar la misma”).');
+      if (!bCity) return fail('Ingresa la ciudad de facturación.');
+      if (!bZip) return fail('Ingresa el código postal de facturación (solo números).');
+      if (!bCountry) return fail('Ingresa el país de facturación.');
+      billing = { same: false, street: bStreet, city: bCity, zip: bZip, country: bCountry };
     }
     const cust = { name, lastName: last, email, phone, shipping, billing };
     m.close();
     payModal(cust);
+  });
+}
+
+/* ---- Aviso: comprar requiere iniciar sesion ---- */
+function requireLoginModal() {
+  const m = openModal(`
+    <div class="modal-body center" style="padding:28px 26px">
+      <div class="pay2-ic" style="margin:0 auto 12px">${ICONS.lock}</div>
+      <h3 style="margin:0 0 6px">Inicia sesión para comprar</h3>
+      <p class="tiny muted" style="margin:0 0 18px">Necesitas una cuenta para finalizar tu compra. Algunos datos se completarán automáticamente con tu cuenta.</p>
+      <button class="btn btn-primary btn-block" id="reqLogin">Iniciar sesión / Crear cuenta</button>
+      <button class="btn btn-block" data-close style="margin-top:8px">Ahora no</button>
+    </div>`, { size: 'modal-md' });
+  $('#reqLogin', m.el)?.addEventListener('click', () => {
+    m.close();
+    authModal('login');
+    // Al terminar el login, reabrir el flujo de compra automaticamente
+    const reopen = () => { document.removeEventListener('kf:auth', reopen); if (State.session) checkoutModal(); };
+    document.addEventListener('kf:auth', reopen);
   });
 }
 
@@ -2508,7 +2570,7 @@ function paySuccess(rec) {
         <div class="kv"><span class="k">Monto pagado</span><b class="mono">${money(rec.total)}</b></div>
         <div class="kv"><span class="k">Fecha</span><b>${esc(rec.datetime || rec.date)}</b></div>
       </div>
-      <p class="hint" id="mailNote" style="margin:12px 0 0">${ICONS.mail} Enviando una copia del pedido a kronoxforgetechnology@gmail.com…</p>
+      <p class="hint" id="mailNote" style="margin:12px 0 0">${ICONS.mail} Enviando el pedido al negocio y una copia a tu correo…</p>
       <button class="btn btn-primary btn-block" id="dlReceipt" style="margin-top:14px">${ICONS.print} Descargar PDF con mis datos</button>
       <button class="btn btn-block" data-close style="margin-top:8px">Listo</button>
     </div>`, { size: 'modal-lg' });
@@ -2540,7 +2602,7 @@ function paySuccess(rec) {
     const n = m.el.querySelector('#mailNote');
     if (!n) return;
     if (r && (r.success === 'true' || r.success === true)) {
-      n.innerHTML = `${ICONS.mail} Copia del pedido enviada a kronoxforgetechnology@gmail.com`;
+      n.innerHTML = `${ICONS.mail} Pedido enviado al negocio y una copia a ${esc(rec.email || 'tu correo')}`;
     } else {
       n.innerHTML = `${ICONS.info} No se pudo enviar el correo automático (revisa la conexión o la activación del servicio). Tu PDF ya se descargó y el pedido quedó registrado en el panel.`;
     }

@@ -58,7 +58,7 @@ function renderSection(sec) {
   CUR_SEC = sec;
   $$('.adm-tab').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
   $$('.adm-sec').forEach(s => s.classList.toggle('hidden', s.id !== 'sec-' + sec));
-  ({ resumen: renderResumen, productos: renderProductos, cupones: renderCupones, usuarios: renderUsuarios, cotizaciones: renderCotizaciones })[sec]();
+  ({ resumen: renderResumen, productos: renderProductos, cupones: renderCupones, usuarios: renderUsuarios, cotizaciones: renderCotizaciones, pedidos: renderPedidos })[sec]();
 }
 
 /* ============================================================
@@ -553,6 +553,79 @@ function renderCotizaciones() {
   }));
 }
 
+/* ============================================================
+   PEDIDOS (compras pagadas: contacto, envio, facturacion)
+   ============================================================ */
+function allOrders() {
+  const list = Store.get('orders', []);
+  return Array.isArray(list) ? list.slice() : [];
+}
+
+function fmtAddr(a) {
+  if (!a) return '—';
+  return [a.street, a.city, a.zip, a.country].filter(Boolean).join(', ');
+}
+
+function renderPedidos() {
+  const orders = allOrders();
+  $('#sec-pedidos').innerHTML = `
+    <div class="page-head-row">
+      <div><h1>Pedidos</h1><p>${orders.length} pedido(s) pagados con datos de contacto y entrega. Se actualizan al instante cuando un cliente completa una compra.</p></div>
+    </div>
+    ${orders.length ? `
+    <div class="table-wrap"><table class="adm-table">
+      <thead><tr><th>Pedido</th><th>Cliente</th><th>Correo</th><th>Teléfono</th><th>Fecha</th><th class="num">Artículos</th><th class="num">Total</th><th></th></tr></thead>
+      <tbody>${orders.map((o, idx) => `
+        <tr>
+          <td><b>${esc(o.order || o.id || '')}</b></td>
+          <td>${esc(o.client || '—')}</td>
+          <td>${esc(o.email || '—')}</td>
+          <td>${esc(o.phone || '—')}</td>
+          <td>${esc(o.datetime || o.date || '')}</td>
+          <td class="num">${(o.items || []).reduce((n, i) => n + i.qty, 0)}</td>
+          <td class="num"><b>${money(o.total || 0)}</b></td>
+          <td><div class="row-actions"><button class="btn" data-ord="${idx}">Ver</button></div></td>
+        </tr>`).join('')}</tbody>
+    </table></div>` :
+    `<div class="card card-pad-lg center"><p class="muted">Aún no hay pedidos pagados registrados.</p></div>`}`;
+
+  $$('#sec-pedidos [data-ord]').forEach(b => b.addEventListener('click', () => {
+    const o = allOrders()[Number(b.dataset.ord)];
+    if (!o) return;
+    const last4 = o.cardLast4 || (o.card || '').replace(/\D/g, '').slice(-4) || '****';
+    openModal(`
+      <div class="modal-head"><h3>Pedido ${esc(o.order || o.id || '')}</h3><button class="x-btn" data-close aria-label="Cerrar">${ICONS.x}</button></div>
+      <div class="modal-body">
+        <p class="tiny muted" style="margin-bottom:12px">${esc(o.datetime || o.date || '')}${o.promo ? ' · cupón ' + esc(o.promo) : ''}</p>
+        <div class="ord-grid">
+          <div class="ord-box">
+            <h4>Contacto</h4>
+            <div class="row-between"><span class="muted">Nombre</span><b>${esc(o.client || '—')}</b></div>
+            <div class="row-between"><span class="muted">Correo</span><b>${esc(o.email || '—')}</b></div>
+            <div class="row-between"><span class="muted">Teléfono</span><b>${esc(o.phone || '—')}</b></div>
+            <div class="row-between"><span class="muted">Tarjeta</span><b>${esc((o.brand || 'Tarjeta') + ' ****' + last4)}</b></div>
+          </div>
+          <div class="ord-box">
+            <h4>Dirección de envío</h4>
+            <p class="ord-addr">${esc(fmtAddr(o.shipping))}</p>
+            <h4 style="margin-top:12px">Dirección de facturación</h4>
+            <p class="ord-addr">${o.billing && o.billing.same ? 'Igual que el envío' : esc(fmtAddr(o.billing))}</p>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="table-wrap"><table class="adm-table">
+          <thead><tr><th>Artículo</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Importe</th></tr></thead>
+          <tbody>${(o.items || []).map(i => `<tr><td>${esc(i.name)}</td><td class="num">${i.qty}</td><td class="num">${money(i.price)}</td><td class="num">${money(i.price * i.qty)}</td></tr>`).join('')}</tbody>
+        </table></div>
+        <div class="divider"></div>
+        <div class="row-between"><span class="muted">Subtotal</span><b>${money(o.subtotal || 0)}</b></div>
+        ${o.discount ? `<div class="row-between"><span class="muted">Descuento</span><b style="color:var(--ok)">−${money(o.discount)}</b></div>` : ''}
+        <div class="row-between"><span>Total pagado (IVA ${Math.round(IVA * 100)}%)</span><b>${money(o.total || 0)}</b></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-sm" data-close>Cerrar</button></div>`, { size: 'modal-lg' });
+  }));
+}
+
 /* ---------- Arranque ---------- */
 function initAdmin() {
   $('#admTabs').addEventListener('click', e => {
@@ -560,6 +633,7 @@ function initAdmin() {
     if (b) renderSection(b.dataset.sec);
   });
   $('#admLogout').addEventListener('click', logout);
+  document.addEventListener('kf:order', () => { if (CUR_SEC === 'pedidos' || CUR_SEC === 'resumen') renderSection(CUR_SEC); });
   if (AdminAuth.session) enterPanel();
 }
 

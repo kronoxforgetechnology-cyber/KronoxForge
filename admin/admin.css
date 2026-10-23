@@ -415,3 +415,12 @@ select { cursor: pointer; }
 @media (max-width: 480px) {
   .pform-grid { grid-template-columns: 1fr; }
 }
+
+/* ---- Detalle de pedido (contacto / envio / facturacion) ---- */
+.ord-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 4px; }
+.ord-box { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); }
+.ord-box h4 { margin: 0 0 8px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted, #64748b); }
+.ord-addr { margin: 0; font-size: 13.5px; line-height: 1.5; }
+@media (max-width: 560px) {
+  .ord-grid { grid-template-columns: 1fr; }
+}
